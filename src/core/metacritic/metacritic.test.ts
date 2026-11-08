@@ -45,6 +45,7 @@ describe("Metacritic mapping", () => {
     expect(user.items[0].author).toBe("Mehrunes");
     expect(mapStats({ data: { item: { score: 7.6, reviewCount: 6924 } } })).toMatchObject({ score: 7.6, reviewCount: 6924 });
     expect(mapStats({})).toMatchObject({ score: null, reviewCount: 0 });
+    expect(mapStats({ data: { item: { score: 0, reviewCount: 2, sentiment: "tbd" } } }).score).toBeNull();
   });
 });
 

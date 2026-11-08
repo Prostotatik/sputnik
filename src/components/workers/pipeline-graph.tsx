@@ -10,11 +10,12 @@ import {
   ReactFlow,
   type Edge,
   type Node,
+  type NodeChange,
   type NodeProps,
 } from "@xyflow/react";
 import clsx from "clsx";
 import { Clock3 } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import type { PipelineNode } from "@/core/pipeline/types";
 import type { NodeStatus } from "@/lib/db/schema";
 import { duration } from "@/lib/client/format";
@@ -131,9 +132,21 @@ export function PipelineGraph({
   runLabel: string | null;
 }) {
   const pos = useMemo(() => layout(nodes), [nodes]);
+  // Controlled nodes must carry their measured size, otherwise React Flow hides them after every live update.
+  const [measured, setMeasured] = useState<Record<string, { width: number; height: number }>>({});
+  const onNodesChange = useCallback((changes: NodeChange<Node<FlowData>>[]) => {
+    const dims = changes.filter((c) => c.type === "dimensions" && c.dimensions);
+    if (!dims.length) return;
+    setMeasured((prev) => {
+      const next = { ...prev };
+      for (const c of dims) if (c.type === "dimensions" && c.dimensions) next[c.id] = c.dimensions;
+      return next;
+    });
+  }, []);
   const flowNodes: Node<FlowData>[] = nodes.map((n) => ({
     id: n.id,
     type: "pipeline",
+    measured: measured[n.id],
     position: pos.get(n.id) ?? { x: 0, y: 0 },
     data: { node: n, exec: exec.get(n.id) ?? null, now, selected: n.id === selectedId, runLabel },
     draggable: false,
@@ -156,11 +169,12 @@ export function PipelineGraph({
     });
 
   return (
-    <div className="h-[520px] w-full">
+    <div className="h-[520px] w-full [--xy-background-color:transparent] [--xy-edge-label-background-color:transparent]">
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
         colorMode="dark"
         fitView
         fitViewOptions={{ padding: 0.12 }}

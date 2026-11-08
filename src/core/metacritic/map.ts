@@ -128,8 +128,10 @@ export function mapProduct(json: unknown): GameDetails {
 
 export function mapStats(json: unknown): ScoreStats {
   const it = obj(obj(obj(json).data).item);
+  const score = num(it.score);
   return {
-    score: num(it.score),
+    // Metacritic reports 0 while a score is still "tbd" (too few ratings).
+    score: score !== null && score > 0 ? score : null,
     reviewCount: num(it.reviewCount) ?? 0,
     positiveCount: num(it.positiveCount) ?? 0,
     neutralCount: num(it.neutralCount) ?? 0,

@@ -64,3 +64,14 @@ describe("API", () => {
     expect(text).toContain("genre_share,Action,games,3");
   });
 });
+
+describe("CSV export safety", async () => {
+  const { toCsv } = await import("@/core/analytics-export");
+  const { computeAnalytics } = await import("@/core/analytics");
+  it("prefixes formula-like cells and keeps negative numbers", () => {
+    const data = computeAnalytics(getDb(), { days: 30 });
+    data.topGames = [{ slug: "x", title: "=HYPERLINK(\"http://evil\")", coverUrl: null, userReviews: -1, userscore: null, metascore: null, interestShare: 0 }];
+    const csv = toCsv(data);
+    expect(csv).toContain(`top_game,"'=HYPERLINK(""http://evil"")",user_reviews,-1`);
+  });
+});

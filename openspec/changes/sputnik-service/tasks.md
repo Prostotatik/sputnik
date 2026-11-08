@@ -3,7 +3,7 @@
 ## 1. Project setup
 
 - [x] 1.1 Scaffold Next.js 16 + TypeScript + Tailwind 4 app with pnpm, ESLint flat config, vitest, tsx and concurrently; verify `pnpm typecheck`, `pnpm lint`, `pnpm test` run green on the empty project
-- [ ] 1.2 Add `.env` loading (keeps `GOOGLE-AI-KEY` name, optional `OPENAI_API_KEY`), `data/` dir gitignored, `README.md` with run instructions; verify `pnpm dev` starts web and worker
+- [x] 1.2 Add `.env` loading (keeps `GOOGLE-AI-KEY` name, optional `OPENAI_API_KEY`), `data/` dir gitignored, `README.md` with run instructions; verify `pnpm dev` starts web and worker
 
 ## 2. Database
 
@@ -41,11 +41,11 @@
 
 ## 9. UI
 
-- [ ] 9.1 Build app shell (sidebar, top bar, Run Now, live dot, backdrop) and shared SSE status hook; verify visually against references
-- [ ] 9.2 Build Games tab (list, filters, search, sort, card with scores/platforms/summaries/insight/similar, service monitor strip) per games-ref.png; verify screenshot comparison
-- [ ] 9.3 Build Workers tab (React Flow graph with live statuses, legend, KPIs, Live/History, node details tabs + settings editor, add custom node, reset, run history) per workers-ref.png; verify editing a prompt changes the next run
-- [ ] 9.4 Build Analytics tab (KPIs, genre donut, trends, supply vs demand, key insights, opportunities scatter, combinations, top games, market activity, export) per analytics-ref.png; verify screenshot comparison
-- [ ] 9.5 Build Monitoring tab (worker state, run progress/history, errors, AI usage vs limits, token/cost estimates); verify screenshot review
+- [x] 9.1 Build app shell (sidebar, top bar, Run Now, live dot, backdrop) and shared SSE status hook; verify visually against references
+- [x] 9.2 Build Games tab (list, filters, search, sort, card with scores/platforms/summaries/insight/similar, service monitor strip) per games-ref.png; verify screenshot comparison
+- [x] 9.3 Build Workers tab (React Flow graph with live statuses, legend, KPIs, Live/History, node details tabs + settings editor, add custom node, reset, run history) per workers-ref.png; verify editing a prompt changes the next run
+- [x] 9.4 Build Analytics tab (KPIs, genre donut, trends, supply vs demand, key insights, opportunities scatter, combinations, top games, market activity, export) per analytics-ref.png; verify screenshot comparison
+- [x] 9.5 Build Monitoring tab (worker state, run progress/history, errors, AI usage vs limits, token/cost estimates); verify screenshot review
 
 ## 10. Integration
 

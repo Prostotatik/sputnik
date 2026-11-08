@@ -21,7 +21,7 @@ export const NODE_META: Record<string, { icon: LucideIcon; color: string; tile: 
   critic_summary: { icon: Star, color: "#facc15", tile: "#3b2f0b", kind: "Subagent", agent: "Review Agent" },
   user_summary: { icon: MessagesSquare, color: "#818cf8", tile: "#312e81", kind: "Subagent", agent: "Review Agent" },
   youtube_search: { icon: Search, color: "#ef4444", tile: "#3f0d0d", kind: "Web", agent: "YouTube Search" },
-  transcribe: { icon: AudioLines, color: "#e5e7eb", tile: "#27272a", kind: "Tool Call", agent: "Speech-to-text" },
+  transcribe: { icon: AudioLines, color: "#e5e7eb", tile: "#27272a", kind: "Media Tool", agent: "Speech-to-text" },
   letsplay_summary: { icon: Sparkles, color: "#38bdf8", tile: "#0c4a6e", kind: "Subagent", agent: "Insight Agent" },
   insights: { icon: ChartColumnIncreasing, color: "#f43f5e", tile: "#4c0519", kind: "Workflow Agent", agent: "Analyst Agent" },
   custom_prompt: { icon: Wand2, color: "#c084fc", tile: "#3b0764", kind: "Custom Rule", agent: "Prompt Agent" },
