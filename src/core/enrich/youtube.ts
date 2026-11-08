@@ -98,13 +98,19 @@ function tokens(s: string): string[] {
     .filter((t) => t.length > 1 && !STOP.has(t));
 }
 
-/** True when most significant words of the game title occur in the video title. */
+const GAMING_TERMS = /\b(let'?s ?play|gameplay|playthrough|walkthrough|part \d|first look|impressions|review|stream|vod|blind|full game|beginner|guide|tips|honest|worth it)\b/i;
+
+/**
+ * True when most significant words of the game title occur in the video title. Single-word titles
+ * ("Planted!") are ambiguous, so they additionally need a gaming term in the video title.
+ */
 export function isRelevant(gameTitle: string, videoTitle: string): boolean {
   const want = tokens(gameTitle);
   if (want.length === 0) return true;
   const have = new Set(tokens(videoTitle));
   const hits = want.filter((t) => have.has(t)).length;
-  return hits / want.length >= 0.6;
+  if (hits / want.length < 0.6) return false;
+  return want.length > 1 || GAMING_TERMS.test(videoTitle);
 }
 
 export interface CandidateFilter {

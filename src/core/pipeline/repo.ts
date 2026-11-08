@@ -74,6 +74,7 @@ export function listNodes(db: Db): PipelineNode[] {
 }
 
 export function getNode(db: Db, id: string): PipelineNode | null {
+  ensurePipeline(db);
   const row = db.select().from(pipelineNodes).where(eq(pipelineNodes.id, id)).get();
   return row ? toNode(row) : null;
 }

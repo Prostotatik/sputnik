@@ -143,7 +143,7 @@ export class RunTracker {
 
   nodeFinish(nodeId: string, status: Extract<NodeStatus, "success" | "failed" | "skipped">): void {
     const n = this.node(nodeId);
-    if (!n || n.status === "skipped") return;
+    if (!n || n.status !== "running") return;
     this.db
       .update(runNodes)
       .set({ status, finishedAt: Date.now() })

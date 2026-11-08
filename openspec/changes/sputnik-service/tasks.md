@@ -33,11 +33,11 @@
 
 ## 7. Worker process
 
-- [ ] 7.1 Implement worker loop: heartbeat, hourly schedule from rules, run_requests polling, single-run lock, pipeline interpreter, per-game error isolation; verify a real run ingests 20 games end-to-end (`pnpm worker:once`) and DB shows summaries/insights
+- [x] 7.1 Implement worker loop: heartbeat, hourly schedule from rules, run_requests polling, single-run lock, pipeline interpreter, per-game error isolation; verify a real run ingests 20 games end-to-end (`pnpm worker:once`) and DB shows summaries/insights
 
 ## 8. Web API
 
-- [ ] 8.1 Implement API routes: games list (search/platform/sort/paging), game detail, platforms, runs (POST run-now with 409 on active), pipeline nodes CRUD/reset, analytics (period/platform) + export, monitoring, SSE stream; verify route handler tests for run-now conflict and list filters
+- [x] 8.1 Implement API routes: games list (search/platform/sort/paging), game detail, platforms, runs (POST run-now with 409 on active), pipeline nodes CRUD/reset, analytics (period/platform) + export, monitoring, SSE stream; verify route handler tests for run-now conflict and list filters
 
 ## 9. UI
 

@@ -68,6 +68,8 @@ describe("YouTube let's-play discovery", () => {
   it("checks title relevance", () => {
     expect(isRelevant("The Legend of Zelda: Tears of the Kingdom", "Zelda Tears of the Kingdom let's play #1")).toBe(true);
     expect(isRelevant("Hades II", "Minecraft let's play")).toBe(false);
+    expect(isRelevant("Planted!", "Spring Has Sprung! | Gets Planted | Full Episode | The Magic School Bus")).toBe(false);
+    expect(isRelevant("Planted!", "Planted Gameplay Part 1")).toBe(true);
   });
 
   it("keeps the clip inside the video and tracks the daily budget", () => {

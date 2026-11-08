@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["better-sqlite3"],
   images: { unoptimized: true },
+  devIndicators: { position: "bottom-right" },
   turbopack: {
     rules: {
       "*.css": {
