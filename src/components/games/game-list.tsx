@@ -41,7 +41,7 @@ export function GameList({
           {filtered ? "Clear the search or pick another platform." : "Press Run Now to collect the first 20 games from Metacritic."}
         </EmptyState>
       ) : (
-        <ul className="space-y-1">
+        <ul className="space-y-[3px]">
           {items.map((g) => {
             const active = g.slug === selected;
             return (
@@ -51,20 +51,20 @@ export function GameList({
                   onClick={() => onSelect(g.slug)}
                   aria-current={active ? "true" : undefined}
                   className={clsx(
-                    "grid w-full grid-cols-[60px_1fr_auto_auto] items-center gap-3 rounded-xl border p-1.5 pr-3 text-left transition-colors",
+                    "grid w-full grid-cols-[60px_1fr_auto_auto] items-center gap-3 rounded-xl border p-1 pr-3 text-left transition-colors",
                     active ? "border-line-2 bg-panel-3/90" : "border-transparent hover:bg-panel-2/70",
                   )}
                 >
-                  <span className="h-[58px] w-[60px] overflow-hidden rounded-md bg-panel-3">
+                  <span className="h-[54px] w-[60px] overflow-hidden rounded-md bg-panel-3">
                     {g.coverUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={g.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
                     )}
                   </span>
                   <span className="min-w-0">
-                    <span className="line-clamp-2 text-[13px] leading-snug text-fg">{g.title}</span>
-                    <span className="mt-1.5 block">
-                      <PlatformBadges platforms={g.platforms} />
+                    <span className="line-clamp-1 text-[13px] leading-snug text-fg" title={g.title}>{g.title}</span>
+                    <span className="mt-1.5 block overflow-hidden [&>span]:flex-nowrap">
+                      <PlatformBadges platforms={g.platforms} max={2} />
                     </span>
                   </span>
                   <ScoreBadge score={g.metascore} />

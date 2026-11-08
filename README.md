@@ -69,7 +69,7 @@ pnpm check          # typecheck + eslint + vitest
 node scripts/ui-smoke.mjs http://localhost:3000 /tmp   # browser check against a running `pnpm dev`
 ```
 
-`python3 -I scripts/compare-refs.py <dir>` compares screenshots named `f-<tab>-1222.png` with `doc/*-ref.png`, using blurred-luminance SSIM and mean colour. Each tab should be most similar to its own reference.
+`node scripts/layout-vs-refs.mjs http://localhost:3000` measures every block of the Games, Workers and Analytics tabs at the reference canvas size (1222×1287) and reports its IoU and centre offset against the same block in `doc/*-ref.png`. Set `GAME=<slug>` to pick the game shown in the card. `python3 -I scripts/compare-refs.py <dir>` compares screenshots named `f-<tab>-1222.png` with `doc/*-ref.png`, using blurred-luminance SSIM and mean colour. Each tab should be most similar to its own reference.
 
 `scripts/ui-smoke.mjs` edits a rule, checks that an invalid value is rejected, then presses Run Now. That starts a real collection run, which sends requests to Metacritic and spends Gemini quota. The script restores the edited rule when it finishes.
 

@@ -163,9 +163,9 @@ export function WorkersView() {
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <h1 className="text-[clamp(34px,3.6vw,44px)] font-semibold tracking-[-0.03em]">Workers</h1>
-            <p className="mt-1 text-[15px] text-muted">Live view of the collection pipeline, its prompts and tools</p>
+            <p className="mt-1 text-[15px] text-muted">Live view of agents, prompts and tool calls</p>
           </div>
-          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 lg:max-w-[580px] lg:flex-nowrap">
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 lg:max-w-[700px] lg:flex-nowrap">
             <Kpi icon={<Cpu className="h-4 w-4 text-good" />} label="Active Workers" value={`${runningCount} / ${enabledCount}`}>
               <Sparkline values={durationSeries.length > 1 ? durationSeries : [0, 0]} width={70} height={34} fill={false} />
             </Kpi>
@@ -299,7 +299,7 @@ export function WorkersView() {
               <div className="mt-6 border-t border-line pt-4">
                 <p className="mb-2 text-[12px] text-muted">Recent runs</p>
                 <ul className="space-y-1.5 text-[12.5px]">
-                  {recentRuns.slice(0, 5).map((r) => (
+                  {recentRuns.slice(0, 3).map((r) => (
                     <li key={r.id}>
                       <button
                         type="button"

@@ -35,17 +35,17 @@ function Delta({ value, suffix = "" }: { value: number | null; suffix?: string }
 
 function KpiCard({ icon, label, value, delta, deltaSuffix, series, color }: { icon: React.ReactNode; label: string; value: string; delta: number | null; deltaSuffix?: string; series: number[]; color: string }) {
   return (
-    <div className="card-glass relative overflow-hidden px-5 py-4">
+    <div className="card-glass relative overflow-hidden px-4 py-3">
       <p className="flex items-center gap-2.5 text-[13px] text-fg/80">
         {icon}
         {label}
       </p>
-      <div className="mt-3 flex items-end justify-between gap-3">
+      <div className="mt-2 flex items-end justify-between gap-3">
         <div className="flex items-baseline gap-2.5">
           <span className="text-[28px] font-semibold tracking-[-0.02em] tabular-nums">{value}</span>
           <Delta value={delta} suffix={deltaSuffix} />
         </div>
-        <Sparkline values={series.length > 1 ? series : [0, 0]} color={color} width={92} height={40} />
+        <Sparkline values={series.length > 1 ? series : [0, 0]} color={color} width={86} height={34} />
       </div>
     </div>
   );
@@ -94,8 +94,8 @@ export function AnalyticsView() {
       />
 
       <div className="relative z-10 px-5 pb-8 md:px-6">
-        <h1 className="text-[clamp(38px,4vw,52px)] font-bold tracking-[-0.035em]">Analytics</h1>
-        <p className="mt-1 text-[17px] text-fg/75">Market insights. Smarter decisions.</p>
+        <h1 className="text-[clamp(36px,3.9vw,50px)] leading-[1.05] font-bold tracking-[-0.035em]">Analytics</h1>
+        <p className="mt-0.5 text-[16px] text-fg/75">Market insights. Smarter decisions.</p>
 
         {empty && (
           <div className="card mt-6">
@@ -107,11 +107,11 @@ export function AnalyticsView() {
 
         {data && !empty && (
           <>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <KpiCard icon={<Gamepad2 className="h-5 w-5 text-fg" />} label="Total Games Tracked" value={num(data.kpis.totalGames.value)} delta={data.kpis.totalGames.delta} series={data.kpis.totalGames.series} color="#4ade80" />
               <KpiCard icon={<Star className="h-5 w-5 fill-yellow text-yellow" />} label="Average Metascore" value={data.kpis.avgMetascore.value?.toFixed(1) ?? "—"} delta={data.kpis.avgMetascore.delta} series={data.kpis.avgMetascore.series} color="#a855f7" />
               <KpiCard icon={<Users className="h-5 w-5 fill-sky text-sky" />} label="Average Userscore" value={data.kpis.avgUserscore.value?.toFixed(1) ?? "—"} delta={data.kpis.avgUserscore.delta} series={data.kpis.avgUserscore.series} color="#3b82f6" />
-              <div className="card-glass relative overflow-hidden px-5 py-4">
+              <div className="card-glass relative overflow-hidden px-4 py-3">
                 {data.kpis.trendingGenre.coverUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={data.kpis.trendingGenre.coverUrl} alt="" className="absolute inset-y-0 right-0 h-full w-1/2 object-cover opacity-70 [mask-image:linear-gradient(90deg,transparent,black_60%)]" />
@@ -119,15 +119,15 @@ export function AnalyticsView() {
                 <p className="relative flex items-center gap-2.5 text-[13px] text-fg/80">
                   <Flame className="h-5 w-5 fill-orange text-orange" /> Trending Genre
                 </p>
-                <div className="relative mt-3 flex items-baseline gap-2.5">
+                <div className="relative mt-2 flex items-baseline gap-2.5">
                   <span className="max-w-[70%] truncate text-[26px] font-semibold tracking-[-0.02em]">{data.kpis.trendingGenre.name ?? "—"}</span>
                   <Delta value={data.kpis.trendingGenre.growth} suffix="%" />
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.25fr]">
-              <section className="card p-5">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.25fr]">
+              <section className="card p-4">
                 <CardTitle
                   right={
                     <div className="flex gap-1" role="tablist" aria-label="Period">
@@ -148,7 +148,7 @@ export function AnalyticsView() {
                 >
                   Genre Popularity
                 </CardTitle>
-                <div className="mt-4 flex flex-wrap items-center gap-8 px-2">
+                <div className="mt-2 flex flex-wrap items-center gap-8 px-2">
                   <GenreDonut data={data.genreShare} />
                   <ul className="min-w-[180px] flex-1 space-y-2.5 text-[13.5px]">
                     {data.genreShare.filter((g) => match(g.genre)).map((g) => (
@@ -164,7 +164,7 @@ export function AnalyticsView() {
                 </div>
               </section>
 
-              <section className="card p-5">
+              <section className="card p-4">
                 <CardTitle
                   right={
                     <ul className="flex flex-wrap gap-4 text-[12px] text-muted">
@@ -178,15 +178,15 @@ export function AnalyticsView() {
                 >
                   Trends Over Time
                 </CardTitle>
-                <p className="mt-1 text-[12px] text-dim">Share of releases per genre</p>
-                <div className="mt-2">
+                <p className="text-[12px] text-dim">Share of releases per genre</p>
+                <div className="mt-1">
                   <TrendLines data={data.trends} />
                 </div>
               </section>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.25fr]">
-              <section className="card p-5">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.25fr]">
+              <section className="card p-4">
                 <CardTitle>Supply vs Demand</CardTitle>
                 <ul className="mt-2 flex gap-5 text-[12px] text-muted">
                   <li className="flex items-center gap-1.5">
@@ -199,7 +199,7 @@ export function AnalyticsView() {
                 <SupplyDemand data={data.supplyDemand} />
               </section>
 
-              <section className="card relative overflow-hidden p-5">
+              <section className="card relative overflow-hidden p-4">
                 {data.topGames[0]?.coverUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={data.topGames[0].coverUrl} alt="" className="absolute inset-y-0 right-0 h-full w-[55%] object-cover opacity-45 [mask-image:linear-gradient(90deg,transparent,black_70%)]" />
@@ -217,7 +217,7 @@ export function AnalyticsView() {
                     Insights are written after a run once the library has at least three recent games.
                   </EmptyState>
                 ) : (
-                  <ul className="relative mt-4 max-w-[560px] space-y-4">
+                  <ul className="relative mt-3 max-w-[560px] space-y-3">
                     {data.insights.items.filter((i) => match(i.text)).map((i) => {
                       const meta = INSIGHT_ICON[i.kind];
                       return (
@@ -234,29 +234,29 @@ export function AnalyticsView() {
               </section>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-              <section className="card p-5">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_1fr]">
+              <section className="card p-4">
                 <CardTitle>
                   <span className="flex items-center gap-2">
                     Under-served Opportunities
-                    <Info className="h-3.5 w-3.5 text-muted" aria-label="Genres with many reviews per game but few releases" />
+                    <Info className="h-3.5 w-3.5 text-muted" aria-label="Genres with many reviews per game but few releases. Orange: high demand, low supply" />
                   </span>
                 </CardTitle>
                 <div className="mt-2 grid gap-4 md:grid-cols-[1fr_130px]">
                   <Opportunities data={data.opportunities.filter((o) => match(o.genre))} />
                   <ul className="space-y-2 self-center text-[12.5px]">
-                    {data.opportunities.slice(0, 6).map((o) => (
+                    {data.opportunities.slice(0, 5).map((o) => (
                       <li key={o.genre} className="flex items-center gap-2 truncate" title={`${o.genre}: ${o.quadrant}`}>
                         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: QUADRANT_COLORS[o.quadrant] }} />
                         <span className="truncate">{o.genre}</span>
                       </li>
                     ))}
-                    <li className="pt-1 text-[11px] text-dim">Orange: high demand, low supply</li>
+                    
                   </ul>
                 </div>
               </section>
 
-              <section className="card p-5">
+              <section className="card p-4">
                 <CardTitle>
                   <span className="flex items-center gap-2">
                     Popular Combinations <Info className="h-3.5 w-3.5 text-muted" aria-label="Platforms and genres that ship together" />
@@ -293,8 +293,8 @@ export function AnalyticsView() {
               </section>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-              <section className="card p-5">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+              <section className="card p-4">
                 <CardTitle right={<span className="pill px-3 py-1.5 text-[12px] text-muted">Player Interest</span>}>Top Games by Player Interest</CardTitle>
                 {data.topGames.length === 0 ? (
                   <EmptyState title="No player reviews in this period" />
@@ -303,7 +303,7 @@ export function AnalyticsView() {
                     {data.topGames.filter((g) => match(g.title)).map((g, i) => (
                       <li key={g.slug}>
                         <Link href={`/games?game=${encodeURIComponent(g.slug)}`} className="group block">
-                          <span className="relative block aspect-[4/3.4] overflow-hidden rounded-lg bg-panel-3">
+                          <span className="relative block aspect-[4/3] overflow-hidden rounded-lg bg-panel-3">
                             {g.coverUrl && (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={g.coverUrl} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -322,7 +322,7 @@ export function AnalyticsView() {
                 )}
               </section>
 
-              <section className="card p-5">
+              <section className="card p-4">
                 <CardTitle
                   right={
                     <span className="flex items-center gap-1.5 text-[13px] text-good">
@@ -332,10 +332,10 @@ export function AnalyticsView() {
                 >
                   Market Activity
                 </CardTitle>
-                <ul className="mt-4 space-y-3">
-                  {data.activity.filter((a) => match(a.title)).map((a) => (
+                <ul className="mt-3 space-y-2">
+                  {data.activity.filter((a) => match(a.title)).slice(0, 5).map((a) => (
                     <li key={`${a.ts}-${a.gameId}`} className="flex items-center gap-3 text-[12.5px]">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet/20 text-violet">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet/20 text-violet">
                         {a.kind === "added" ? <Plus className="h-3.5 w-3.5" /> : <RefreshCw className="h-3.5 w-3.5" />}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-fg/85">

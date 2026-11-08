@@ -9,7 +9,7 @@ import { ServiceMonitor } from "../service-monitor";
 import { Backdrop, RunNowButton, SearchBox, TopBar } from "../shell";
 import { useStatus } from "../status";
 import { Select } from "../ui";
-import { GameDetail, SimilarGames, YoutubeInsight } from "./game-detail";
+import { GameDetail, GameExtras, SimilarGames, YoutubeInsight } from "./game-detail";
 import { GameList } from "./game-list";
 
 const PAGE = 10;
@@ -155,6 +155,11 @@ export function GamesView() {
       <div className="relative z-10">
         <ServiceMonitor />
       </div>
+      {detailData && (
+        <div className="relative z-10 px-5 pb-6 md:px-6">
+          <GameExtras data={detailData} />
+        </div>
+      )}
     </>
   );
 }

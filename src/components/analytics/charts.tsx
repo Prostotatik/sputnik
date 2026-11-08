@@ -33,10 +33,10 @@ const tooltipStyle = {
 export function GenreDonut({ data }: { data: AnalyticsData["genreShare"] }) {
   const top = data[0];
   return (
-    <div className="relative h-[180px] w-[180px] shrink-0">
+    <div className="relative h-[164px] w-[164px] shrink-0">
       <ResponsiveContainer>
         <PieChart>
-          <Pie data={data} dataKey="count" nameKey="genre" innerRadius={62} outerRadius={84} paddingAngle={1.5} stroke="none" startAngle={90} endAngle={-270}>
+          <Pie data={data} dataKey="count" nameKey="genre" innerRadius={56} outerRadius={77} paddingAngle={1.5} stroke="none" startAngle={90} endAngle={-270}>
             {data.map((d, i) => (
               <Cell key={d.genre} fill={GENRE_COLORS[i % GENRE_COLORS.length]} />
             ))}
@@ -57,7 +57,7 @@ export function GenreDonut({ data }: { data: AnalyticsData["genreShare"] }) {
 export function TrendLines({ data }: { data: AnalyticsData["trends"] }) {
   const rows = data.buckets.map((label, i) => ({ label, ...Object.fromEntries(data.series.map((s) => [s.genre, s.values[i]])) }));
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <ResponsiveContainer width="100%" height={168}>
       <LineChart data={rows} margin={{ top: 10, right: 12, left: -18, bottom: 0 }}>
         <CartesianGrid stroke="#1e1e24" vertical={false} />
         <XAxis dataKey="label" {...axis} />
@@ -73,7 +73,7 @@ export function TrendLines({ data }: { data: AnalyticsData["trends"] }) {
 
 export function SupplyDemand({ data }: { data: AnalyticsData["supplyDemand"] }) {
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <ResponsiveContainer width="100%" height={150}>
       <ComposedChart data={data} margin={{ top: 10, right: 0, left: -18, bottom: 0 }}>
         <defs>
           <linearGradient id="bar-supply" x1="0" y1="0" x2="0" y2="1">
@@ -98,7 +98,7 @@ const QUADRANT_COLORS: Record<string, string> = { opportunity: "#f59e0b", compet
 export function Opportunities({ data }: { data: AnalyticsData["opportunities"] }) {
   const rows = data.map((d) => ({ ...d, z: Math.max(1, d.avgMetascore ?? 50) }));
   return (
-    <ResponsiveContainer width="100%" height={190}>
+    <ResponsiveContainer width="100%" height={150}>
       <ScatterChart margin={{ top: 10, right: 16, left: 0, bottom: 14 }}>
         <CartesianGrid stroke="#1e1e24" />
         <XAxis type="number" dataKey="games" name="Games" {...axis} allowDecimals={false} label={{ value: "Number of games", position: "insideBottom", offset: -8, fill: "#8a8a96", fontSize: 11 }} />
