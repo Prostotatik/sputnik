@@ -68,7 +68,7 @@ export function GameList({
                     </span>
                   </span>
                   <ScoreBadge score={g.metascore} />
-                  <span className="w-[52px] text-right text-[11px] text-muted">{timeAgo(g.updatedAt)}</span>
+                  <span className="w-[52px] text-right text-[11px] whitespace-nowrap text-muted">{timeAgo(g.updatedAt)}</span>
                 </button>
               </li>
             );
