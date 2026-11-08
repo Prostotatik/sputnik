@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"pnpm worker\"",
+    "dev": "concurrently -P -k -n web,worker -c blue,magenta \"next dev {@}\" \"pnpm worker\"",
     "dev:web": "next dev",
     "worker": "tsx watch --clear-screen=false src/worker/main.ts",
     "worker:once": "tsx src/worker/main.ts --once",
