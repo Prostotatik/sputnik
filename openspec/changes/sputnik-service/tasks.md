@@ -2,21 +2,21 @@
 
 ## 1. Project setup
 
-- [ ] 1.1 Scaffold Next.js 16 + TypeScript + Tailwind 4 app with pnpm, ESLint flat config, vitest, tsx and concurrently; verify `pnpm typecheck`, `pnpm lint`, `pnpm test` run green on the empty project
+- [x] 1.1 Scaffold Next.js 16 + TypeScript + Tailwind 4 app with pnpm, ESLint flat config, vitest, tsx and concurrently; verify `pnpm typecheck`, `pnpm lint`, `pnpm test` run green on the empty project
 - [ ] 1.2 Add `.env` loading (keeps `GOOGLE-AI-KEY` name, optional `OPENAI_API_KEY`), `data/` dir gitignored, `README.md` with run instructions; verify `pnpm dev` starts web and worker
 
 ## 2. Database
 
-- [ ] 2.1 Define Drizzle schema for games, platforms, summaries, insights, custom fields, embeddings, similar, runs, run_nodes, run_events, run_requests, daily_state, pipeline_nodes, ai_calls, ai_quota, worker_heartbeat, analytics_insights; generate migration; open DB with WAL + busy_timeout; verify a vitest opens an in-memory DB and applies migrations
+- [x] 2.1 Define Drizzle schema for games, platforms, summaries, insights, custom fields, embeddings, similar, runs, run_nodes, run_events, run_requests, daily_state, pipeline_nodes, ai_calls, ai_quota, worker_heartbeat, analytics_insights; generate migration; open DB with WAL + busy_timeout; verify a vitest opens an in-memory DB and applies migrations
 
 ## 3. Pipeline rules
 
-- [ ] 3.1 Implement node types, zod param schemas, default pipeline (TZ rules) and seeding/reset; verify unit tests for validation (rejects games-per-run 0) and default seed
+- [x] 3.1 Implement node types, zod param schemas, default pipeline (TZ rules) and seeding/reset; verify unit tests for validation (rejects games-per-run 0) and default seed
 
 ## 4. AI routing
 
-- [ ] 4.1 Implement model catalog (pools + limits from doc/google-limits.md + estimated prices), persistent quota counters and rotation with 429/503 cooldown; verify unit tests for RPD exhaustion fallback, 429 rotation and restart persistence
-- [ ] 4.2 Implement Gemini client (header auth, structured JSON, YouTube video input, embeddings), optional OpenAI client, tolerant JSON parse and `ai_calls` logging with key redaction; verify unit test that logged request has no key and a live smoke call succeeds
+- [x] 4.1 Implement model catalog (pools + limits from doc/google-limits.md + estimated prices), persistent quota counters and rotation with 429/503 cooldown; verify unit tests for RPD exhaustion fallback, 429 rotation and restart persistence
+- [x] 4.2 Implement Gemini client (header auth, structured JSON, YouTube video input, embeddings), optional OpenAI client, tolerant JSON parse and `ai_calls` logging with key redaction; verify unit test that logged request has no key and a live smoke call succeeds
 
 ## 5. Metacritic ingestion
 
