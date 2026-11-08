@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isAllowedMutation } from "./lib/same-origin";
+import { isAllowedRequest } from "./lib/same-origin";
 
 export function proxy(request: NextRequest) {
-  if (!isAllowedMutation(request.method, request.headers, request.headers.get("host"))) {
-    return NextResponse.json({ error: "Cross-site requests are not allowed" }, { status: 403 });
+  if (!isAllowedRequest(request.method, request.headers)) {
+    return NextResponse.json({ error: "Request blocked: unknown host or cross-site request" }, { status: 403 });
   }
   return NextResponse.next();
 }

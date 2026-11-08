@@ -147,11 +147,15 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3 md:absolute md:right-6 md:bottom-7 md:mt-0">
-            {game.videoUrl && (
+            {game.videoUrl ? (
               <a href={game.videoUrl} target="_blank" rel="noreferrer" className="card-glass flex items-center gap-3 px-5 py-3 text-[13px] hover:border-line-2" title={game.videoTitle ?? "Watch video"}>
                 <Play className="h-4 w-4" /> Watch Trailer <ExternalLink className="h-3.5 w-3.5 text-muted" />
               </a>
-            )}
+            ) : insight ? (
+              <a href={insight.videoUrl} target="_blank" rel="noreferrer" className="card-glass flex items-center gap-3 px-5 py-3 text-[13px] hover:border-line-2" title={insight.videoTitle}>
+                <Play className="h-4 w-4" /> Watch Let&apos;s-play <ExternalLink className="h-3.5 w-3.5 text-muted" />
+              </a>
+            ) : null}
             <a href={game.metacriticUrl} target="_blank" rel="noreferrer" className="card-glass flex items-center gap-2 px-4 py-3 text-[13px] text-muted hover:text-fg">
               Metacritic <ArrowUpRight className="h-3.5 w-3.5" />
             </a>

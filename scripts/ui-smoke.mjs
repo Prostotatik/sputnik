@@ -1,4 +1,6 @@
 // End-to-end UI check against a running `pnpm dev`: edits a rule, presses Run Now, captures screenshots.
+// WARNING: this starts a REAL collection run (Metacritic requests and Gemini calls that count against quotas).
+// The edited rule is restored to its default at the end.
 import { chromium } from "playwright-core";
 
 const base = process.argv[2] ?? "http://localhost:3000";
@@ -7,6 +9,7 @@ const browser = await chromium.launch({ channel: "chrome" });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1300 } });
 const log = (m) => console.log(`[ui-smoke] ${m}`);
 
+try {
 await page.goto(`${base}/workers`);
 await page.getByText("Summarize Critics").first().click();
 await page.getByRole("tab", { name: "Settings" }).click();
@@ -33,4 +36,8 @@ await page.goto(`${base}/workers`);
 await page.waitForTimeout(4000);
 await page.screenshot({ path: `${out}/workers-running.png`, fullPage: true });
 log("screenshots written");
-await browser.close();
+} finally {
+  await fetch(`${base}/api/pipeline/reviews`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reset" }) });
+  log("critic summary rule restored to default");
+  await browser.close();
+}

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { openDb } from "@/lib/db/client";
-import { gameInsights, games, gameSummaries, runNodes, runs } from "@/lib/db/schema";
+import { gameCustomFields, gameInsights, games, gameSummaries, runNodes, runs } from "@/lib/db/schema";
 import type { AiService } from "@/core/ai/service";
 import type { MetacriticClient } from "@/core/metacritic/client";
 import product from "@/core/metacritic/__fixtures__/product-elden-ring.json";
 import { mapProduct, type FinderItem } from "@/core/metacritic/map";
-import { listNodes, updateNode } from "@/core/pipeline/repo";
+import { addCustomNode, listNodes, updateNode } from "@/core/pipeline/repo";
 import { loadDailyState } from "@/core/selection";
 import { dayKey } from "@/lib/time";
 import { executeRun } from "./runner";
@@ -29,23 +29,30 @@ function fakeMc(newReleases: string[], failing: string[] = []): MetacriticClient
   } as unknown as MetacriticClient;
 }
 
-function fakeAi(): AiService & { calls: string[] } {
+function fakeAi(): AiService & { calls: string[]; prompts: string[] } {
   const calls: string[] = [];
+  const prompts: string[] = [];
   return {
     calls,
-    json: async (ctx: { purpose: string }) => {
+    prompts,
+    json: async (ctx: { purpose: string }, prompt: string) => {
       calls.push(ctx.purpose);
+      prompts.push(prompt);
       if (ctx.purpose === "insights") return { value: { insights: [{ kind: "up", text: "Action is growing a lot" }] }, model: "fake" };
       if (ctx.purpose === "letsplay_summary") return { value: { conclusion: "The blogger loves it", highlights: ["combat"] }, model: "fake" };
       return { value: { likes: ["World"], dislikes: ["Bugs"], verdict: "Great" }, model: "fake" };
     },
-    text: async () => ({ value: "custom", model: "fake" }),
+    text: async (ctx: { purpose: string }, prompt: string) => {
+      calls.push(ctx.purpose);
+      prompts.push(prompt);
+      return { value: "Premium, no microtransactions", model: "fake" };
+    },
     transcribeYoutube: async (ctx: { purpose: string }) => {
       calls.push(ctx.purpose);
       return { value: "So this boss is incredible, I love the combat in this game ".repeat(10), model: "fake" };
     },
     embedding: async () => ({ value: [1, 0, 0], model: "fake-emb" }),
-  } as unknown as AiService & { calls: string[] };
+  } as unknown as AiService & { calls: string[]; prompts: string[] };
 }
 
 const youtubeSearch = async () => [
@@ -87,5 +94,26 @@ describe("executeRun", () => {
     // Second run of the day continues from See All, skipping processed games.
     await executeRun({ db, mc: fakeMc(["a1", "a2"]), ai, youtubeSearch }, "schedule");
     expect(db.select().from(games).all().map((g) => g.slug).sort()).toEqual(["a1", "a2", "x1", "x2"]);
+  });
+
+  it("uses an edited prompt on the next run and stores custom rule output on the game", async () => {
+    const db = openDb(":memory:");
+    listNodes(db);
+    updateNode(db, "sync", { params: { gamesPerRun: 1 } });
+    updateNode(db, "youtube", { enabled: false });
+    updateNode(db, "reviews", { prompt: "EDITED critic prompt for {{title}}: {{reviews}}" });
+    const added = addCustomNode(db, { label: "Monetization", fieldKey: "monetization", prompt: "How is {{title}} monetised on {{platforms}}?" });
+    expect(added.ok).toBe(true);
+    const ai = fakeAi();
+    await executeRun({ db, mc: fakeMc(["a1"]), ai, youtubeSearch }, "manual");
+    expect(ai.prompts.some((p) => p.startsWith("EDITED critic prompt for Game a1:"))).toBe(true);
+    const custom = ai.prompts.find((p) => p.startsWith("How is Game a1 monetised on "));
+    expect(custom).toBeDefined();
+    expect(custom).toContain("PlayStation 5");
+    expect(custom).not.toContain("{{");
+    expect(db.select().from(gameCustomFields).all()).toEqual([
+      expect.objectContaining({ key: "monetization", label: "Monetization", value: "Premium, no microtransactions" }),
+    ]);
+    expect(db.select().from(runNodes).all().find((n) => n.nodeId === "custom_monetization")?.status).toBe("success");
   });
 });

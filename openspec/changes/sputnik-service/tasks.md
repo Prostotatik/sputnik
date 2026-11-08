@@ -49,7 +49,7 @@
 
 ## 10. Integration
 
-- [ ] 10.1 Run `pnpm typecheck && pnpm lint && pnpm test`, perform a live run from the UI Run Now button, and screenshot all four tabs side by side with references; verify all green and visual parity
+- [x] 10.1 Run `pnpm typecheck && pnpm lint && pnpm test`, perform a live run from the UI Run Now button, and screenshot all four tabs side by side with references; verify all green and visual parity
 
 ## Workflow follow-up
 

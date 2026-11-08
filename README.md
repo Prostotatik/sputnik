@@ -2,7 +2,7 @@
 
 Sputnik tracks newly released games on Metacritic. Once an hour it takes 20 games it has not processed yet that day and adds or updates them in a local library. For each game it collects:
 
-- title, cover, platforms with Metascore and Userscore per platform, developer, genres, description and video link
+- title, cover, platforms with Metascore and Userscore per platform, developer, genres, description and video link (the Metacritic trailer when one exists, otherwise the analysed let's-play)
 - separate AI summaries of what critics and players like and dislike
 - an AI conclusion from the narration of the most popular commentated let's-play on YouTube, with a link to the video
 - similar games from the library
@@ -66,10 +66,13 @@ Per-minute and per-day counters are stored in SQLite, so they survive restarts. 
 
 ```sh
 pnpm check          # typecheck + eslint + vitest
+node scripts/ui-smoke.mjs http://localhost:3000 /tmp   # browser check against a running `pnpm dev`
 ```
+
+`scripts/ui-smoke.mjs` edits a rule, checks that an invalid value is rejected, then presses Run Now. That starts a real collection run, which sends requests to Metacritic and spends Gemini quota. The script restores the edited rule when it finishes.
 
 ## Security notes
 
 This is a single-user local tool and has no login. Run it on a trusted machine or behind your own auth.
 
-State-changing API routes (Run Now, rule edits) reject cross-site requests in `src/proxy.ts`. Exported CSV cells are escaped against spreadsheet formula injection.
+`src/proxy.ts` only accepts API requests whose Host is `localhost`, `127.0.0.1` or listed in `SPUTNIK_ALLOWED_HOSTS` (comma-separated), which blocks DNS rebinding. It also rejects cross-site state-changing requests such as Run Now and rule edits. Exported CSV cells are escaped against spreadsheet formula injection.
