@@ -4,6 +4,7 @@ import type { Db } from "@/lib/db/client";
 import { gameSummaries, type SummaryKind } from "@/lib/db/schema";
 import type { AiContext, AiService } from "../ai/service";
 import type { Review } from "../metacritic/map";
+import { realPoints } from "@/lib/opinions";
 import { renderPrompt } from "../pipeline/defaults";
 
 const QUOTE_LIMIT = 600;
@@ -87,7 +88,7 @@ export async function summarizeReviews(
     reviews: formatReviews(reviews),
   });
   const res = await ai.json(ctx, prompt, summarySchema, summaryValidator);
-  const clean = (list: string[]) => list.map((s) => s.trim().replace(/\.$/, "")).filter(Boolean).slice(0, 5);
+  const clean = (list: string[]) => realPoints(list.map((s) => s.trim().replace(/\.$/, "")).filter(Boolean)).slice(0, 5);
   return {
     summary: { likes: clean(res.value.likes), dislikes: clean(res.value.dislikes), verdict: res.value.verdict.trim() },
     model: res.model,

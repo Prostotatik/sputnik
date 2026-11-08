@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { MobileNav, Sidebar } from "@/components/shell";
 import { StatusProvider } from "@/components/status";
 import "./globals.css";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin", "cyrillic"] });
+const geist = Geist({ variable: "--font-geist", subsets: ["latin", "cyrillic"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
   title: "Sputnik — game market radar",
@@ -13,12 +14,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} h-full`}>
       <body className="min-h-full">
         <StatusProvider>
           <Sidebar />
           <MobileNav />
-          <main className="relative min-h-screen md:pl-[120px]">{children}</main>
+          <main className="relative min-h-screen md:pl-60">{children}</main>
         </StatusProvider>
       </body>
     </html>

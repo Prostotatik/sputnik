@@ -80,32 +80,31 @@ const FlowNode = memo(function FlowNode({ data }: NodeProps<Node<FlowData>>) {
   return (
     <div
       className={clsx(
-        "relative rounded-xl border bg-[#101014]/95 px-3 py-2.5 backdrop-blur transition-shadow",
-        selected ? "border-accent-2 shadow-[0_0_0_1px_var(--color-accent-2),0_0_28px_-6px_rgb(109_112_255/0.7)]" : "border-line-2",
-        isRoot && "border-violet/60 py-4 shadow-[0_0_30px_-8px_rgb(168_85_247/0.6)]",
-        !node.enabled && "opacity-55",
+        "relative rounded-[10px] border bg-panel px-3 py-2.5 transition-colors",
+        selected ? "border-accent" : "border-line-2",
+        isRoot && "py-4",
+        !node.enabled && "opacity-50",
       )}
       style={{ width: isRoot ? ROOT_W : W }}
     >
-      {!isRoot && <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-0 !bg-cyan" />}
-      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-0 !bg-violet" />
-      <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full" style={{ background: st.color, boxShadow: status === "running" ? `0 0 8px ${st.color}` : undefined }} />
+      {!isRoot && <Handle type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-[#85858b]" />}
+      <Handle type="source" position={Position.Right} className="!h-1.5 !w-1.5 !border-0 !bg-[#85858b]" />
+      <span className={clsx("absolute top-3 right-3 h-1.5 w-1.5 rounded-full", status === "running" && "live-dot")} style={{ background: st.color }} />
       <div className="flex items-start gap-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: meta.tile }}>
-          {node.type === "youtube_search" ? <YoutubeGlyph className="h-4 w-6" /> : <Icon className="h-[18px] w-[18px]" style={{ color: meta.color }} />}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-panel-3 text-muted">
+          {node.type === "youtube_search" ? <YoutubeGlyph className="h-3.5 w-5" /> : <Icon className="h-4 w-4" strokeWidth={1.5} />}
         </span>
         <div className="min-w-0 pr-2">
-          <p className="truncate text-[12px] font-medium text-fg">{node.name}</p>
-          {isRoot && runLabel && <p className="text-[11px] text-muted">{runLabel}</p>}
-          <p className="mt-0.5 flex items-center gap-1 text-[10px]" style={{ color: st.color }}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: st.color }} />
-            {node.enabled ? st.label : "Disabled"}
-            {progress && <span className="text-muted">• {progress}</span>}
-            {ms !== null && !isRoot && <span className="text-muted">• {duration(ms)}</span>}
+          <p className="truncate text-xs font-medium text-fg">{node.name}</p>
+          {isRoot && runLabel && <p className="font-mono text-[11px] text-dim">{runLabel}</p>}
+          <p className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-dim">
+            <span style={{ color: st.color }}>{node.enabled ? st.label : "Disabled"}</span>
+            {progress && <span>{progress}</span>}
+            {ms !== null && !isRoot && <span>{duration(ms)}</span>}
           </p>
           {isRoot && ms !== null && (
-            <p className="mt-1 flex items-center gap-1 text-[10px] text-muted">
-              <Clock3 className="h-3 w-3" /> {duration(ms)}
+            <p className="mt-1 flex items-center gap-1 font-mono text-[11px] text-dim">
+              <Clock3 className="h-3 w-3" strokeWidth={1.5} /> {duration(ms)}
             </p>
           )}
         </div>
@@ -157,14 +156,14 @@ export function PipelineGraph({
     .map((n) => {
       const st = exec.get(n.id)?.status;
       const live = st === "running" || st === "success";
-      const color = !n.enabled ? "#3f3f46" : st === "failed" ? "#ef4444" : live ? (NODE_META[n.type]?.color ?? "#818cf8") : "#71717a";
+      const color = !n.enabled ? "#3a3a3d" : st === "failed" ? "#e5484d" : st === "running" ? "#4fb6c8" : live ? "#85858b" : "#5c5c62";
       return {
         id: `${n.parentId}-${n.id}`,
         source: n.parentId!,
         target: n.id,
         type: "default",
         animated: st === "running",
-        style: { stroke: color, strokeWidth: 1.4, strokeDasharray: live ? undefined : "4 4", opacity: n.enabled ? 0.9 : 0.4 },
+        style: { stroke: color, strokeWidth: 1.25, strokeDasharray: live ? undefined : "4 4", opacity: n.enabled ? 1 : 0.5 },
       };
     });
 
@@ -186,7 +185,7 @@ export function PipelineGraph({
         nodesConnectable={false}
         style={{ background: "transparent" }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#1c1c22" />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#232325" />
         <Controls showInteractive={false} position="bottom-left" className="!rounded-xl !border !border-line-2 !bg-panel !shadow-none [&>button]:!border-line [&>button]:!bg-panel [&>button]:!fill-fg" />
       </ReactFlow>
     </div>

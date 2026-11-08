@@ -50,7 +50,7 @@ const PLACEHOLDERS: Record<string, string> = {
 
 function JsonBlock({ value }: { value: unknown }) {
   if (value === null || value === undefined) return <EmptyState title="Nothing recorded for this run" />;
-  return <pre className="max-h-[260px] overflow-auto rounded-lg bg-black/40 p-3 text-[11.5px] leading-relaxed text-fg/80">{JSON.stringify(value, null, 2)}</pre>;
+  return <pre className="max-h-[260px] overflow-auto rounded-lg bg-deep p-3 text-xs leading-relaxed text-muted">{JSON.stringify(value, null, 2)}</pre>;
 }
 
 function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: () => void; onDeleted: () => void }) {
@@ -117,7 +117,7 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         {Object.entries(params).map(([key, value]) => (
-          <label key={key} className="flex flex-col gap-1.5 text-[12px] text-muted">
+          <label key={key} className="flex flex-col gap-1.5 text-xs text-muted">
             {PARAM_LABELS[key] ?? key}
             {typeof value === "boolean" ? (
               <input type="checkbox" checked={value} onChange={(e) => setParams((p) => ({ ...p, [key]: e.target.checked }))} className="h-4 w-4 accent-[var(--color-accent)]" />
@@ -126,44 +126,44 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
                 type={typeof value === "number" ? "number" : "text"}
                 value={String(value ?? "")}
                 onChange={(e) => setParams((p) => ({ ...p, [key]: typeof value === "number" ? Number(e.target.value) : e.target.value }))}
-                className="h-9 rounded-lg border border-line-2 bg-black/30 px-3 text-[13px] text-fg focus:border-accent focus:outline-none"
+                className="h-9 rounded-lg border border-line-2 bg-panel-2 px-3 text-[13px] text-fg focus:border-line-2 focus:outline-none"
               />
             )}
           </label>
         ))}
       </div>
       {hasPrompt && (
-        <label className="flex flex-col gap-1.5 text-[12px] text-muted">
+        <label className="flex flex-col gap-1.5 text-xs text-muted">
           Prompt
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={8}
-            className="rounded-lg border border-line-2 bg-black/30 p-3 font-[inherit] text-[12.5px] leading-relaxed text-fg focus:border-accent focus:outline-none"
+            className="rounded-lg border border-line-2 bg-panel-2 p-3 font-[inherit] text-[13px] leading-relaxed text-fg focus:border-line-2 focus:outline-none"
           />
           <span className="text-[11px] text-dim">Placeholders: {PLACEHOLDERS[node.type]}</span>
         </label>
       )}
       {errors.length > 0 && (
-        <ul role="alert" className="rounded-lg border border-bad/40 bg-bad/10 p-3 text-[12px] text-bad">
+        <ul role="alert" className="rounded-lg border border-bad/40 bg-bad/10 p-3 text-xs text-bad">
           {errors.map((e) => (
             <li key={e}>{e}</li>
           ))}
         </ul>
       )}
-      {saved && <p role="status" className="text-[12px] text-good">{saved}</p>}
+      {saved && <p role="status" className="text-xs text-good">{saved}</p>}
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={busy} className="btn-primary flex h-9 items-center gap-2 px-4 text-[12.5px]">
-          <Save className="h-3.5 w-3.5" /> Save rules
+        <button type="submit" disabled={busy} className="btn-primary flex h-9 items-center gap-2 px-4 text-[13px]">
+          <Save className="h-4 w-4" strokeWidth={1.5} /> Save rules
         </button>
         {!node.isCustom && (
-          <button type="button" onClick={reset} disabled={busy} className="pill flex h-9 items-center gap-2 px-4 text-[12.5px] text-muted hover:text-fg">
-            <RotateCcw className="h-3.5 w-3.5" /> Reset to default
+          <button type="button" onClick={reset} disabled={busy} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
+            <RotateCcw className="h-4 w-4 text-dim" strokeWidth={1.5} /> Reset to default
           </button>
         )}
         {node.isCustom && (
-          <button type="button" onClick={remove} disabled={busy} className="pill flex h-9 items-center gap-2 px-4 text-[12.5px] text-bad hover:border-bad/50">
-            <Trash2 className="h-3.5 w-3.5" /> Delete rule
+          <button type="button" onClick={remove} disabled={busy} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px] text-bad">
+            <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Delete rule
           </button>
         )}
       </div>
@@ -198,23 +198,23 @@ export function NodeDetails({
   return (
     <section className="card p-5" aria-labelledby="node-title">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-[17px] font-semibold">Node Details</h2>
-        <span className="flex items-center gap-2 rounded-full border px-3 py-1 text-[12px]" style={{ color: st.color, borderColor: `${st.color}55`, background: `${st.color}14` }}>
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: st.color }} />
+        <h2 className="text-[15px] font-medium">Step details</h2>
+        <span className="flex items-center gap-2 font-mono text-xs text-muted">
+          <span className={clsx("h-1.5 w-1.5 rounded-full", status === "running" && "live-dot")} style={{ background: st.color }} />
           {node.enabled ? st.label : "Disabled"}
         </span>
       </div>
       <div className="mt-4 flex items-center gap-5">
-        <span className="flex h-[72px] w-[72px] items-center justify-center rounded-2xl border border-line-2" style={{ background: meta.tile }}>
-          {node.type === "youtube_search" ? <YoutubeGlyph className="h-7 w-10" /> : <Icon className="h-9 w-9" style={{ color: meta.color }} strokeWidth={1.6} />}
+        <span className="flex h-14 w-14 items-center justify-center rounded-xl border border-line bg-panel-3 text-muted">
+          {node.type === "youtube_search" ? <YoutubeGlyph className="h-5 w-7" /> : <Icon className="h-6 w-6" strokeWidth={1.5} />}
         </span>
         <div>
-          <p id="node-title" className="text-[22px] font-medium tracking-[-0.01em]">{node.name}</p>
+          <p id="node-title" className="text-xl font-medium">{node.name}</p>
           <p className="text-[13px] text-muted">{index}</p>
         </div>
       </div>
 
-      <div role="tablist" aria-label="Node details" className="mt-5 flex gap-6 overflow-x-auto border-b border-line text-[14px]">
+      <div role="tablist" aria-label="Node details" className="mt-5 flex gap-6 overflow-x-auto border-b border-line text-sm">
         {TABS.map((t) => (
           <button
             key={t}
@@ -222,7 +222,7 @@ export function NodeDetails({
             type="button"
             aria-selected={tab === t}
             onClick={() => setTab(t)}
-            className={clsx("-mb-px border-b-2 pb-2.5 whitespace-nowrap", tab === t ? "border-accent-2 text-fg" : "border-transparent text-muted hover:text-fg")}
+            className={clsx("-mb-px border-b-2 pb-2.5 whitespace-nowrap", tab === t ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg")}
           >
             {t}
           </button>
@@ -232,7 +232,7 @@ export function NodeDetails({
       <div className="pt-4" role="tabpanel">
         {tab === "Overview" && (
           <div>
-            <dl className="grid grid-cols-3 gap-4 text-[12px] text-muted">
+            <dl className="grid grid-cols-3 gap-4 text-xs text-muted">
               <div>
                 <dt>Duration</dt>
                 <dd className="mt-1.5 flex items-center gap-2 text-[15px] text-fg">
@@ -248,28 +248,28 @@ export function NodeDetails({
               <div>
                 <dt>Agent</dt>
                 <dd className="mt-1.5 flex items-center gap-2 text-[15px] text-fg">
-                  <Bot className="h-4 w-4 text-violet" /> {meta.agent}
+                  <Bot className="h-4 w-4 text-dim" strokeWidth={1.5} /> {meta.agent}
                 </dd>
               </div>
             </dl>
-            <p className="mt-4 text-[13.5px] text-fg/85">{node.description}</p>
+            <p className="mt-4 text-[13px] text-muted">{node.description}</p>
             {exec && exec.total > 0 && (
               <div className="mt-4">
-                <div className="mb-1.5 flex justify-between text-[12px] text-muted">
+                <div className="mb-1.5 flex justify-between text-xs text-muted">
                   <span>Progress</span>
                   <span>
                     {exec.done} / {exec.total}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-panel-3">
-                  <div className="h-full rounded-full bg-good transition-[width] duration-500" style={{ width: `${Math.min(100, (exec.done / exec.total) * 100)}%` }} />
+                  <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.min(100, (exec.done / exec.total) * 100)}%` }} />
                 </div>
               </div>
             )}
             {node.prompt && (
               <div className="mt-4">
-                <p className="mb-1.5 text-[12px] text-muted">Prompt</p>
-                <p className="line-clamp-4 rounded-lg bg-black/40 p-3 text-[12px] leading-relaxed whitespace-pre-line text-fg/75">{node.prompt}</p>
+                <p className="mb-1.5 text-xs text-muted">Prompt</p>
+                <p className="line-clamp-4 rounded-lg bg-deep p-3 text-xs leading-relaxed whitespace-pre-line text-muted">{node.prompt}</p>
               </div>
             )}
           </div>
@@ -280,11 +280,11 @@ export function NodeDetails({
           ((exec?.logs ?? []).length === 0 ? (
             <EmptyState title="No log lines for this run" />
           ) : (
-            <ol className="max-h-[260px] space-y-1.5 overflow-auto font-mono text-[11.5px]">
+            <ol className="max-h-[260px] space-y-1.5 overflow-auto font-mono text-xs">
               {(exec?.logs as NodeLog[]).map((l, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="shrink-0 text-dim">{new Date(l.ts).toLocaleTimeString("en-GB")}</span>
-                  <span className={clsx(l.level === "error" ? "text-bad" : l.level === "warn" ? "text-warn" : "text-fg/80")}>{l.message}</span>
+                  <span className={clsx(l.level === "error" ? "text-bad" : l.level === "warn" ? "text-warn" : "text-muted")}>{l.message}</span>
                 </li>
               ))}
             </ol>

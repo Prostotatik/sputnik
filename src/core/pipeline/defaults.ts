@@ -5,14 +5,14 @@ const CRITIC_PROMPT = `You analyse professional critic reviews of the video game
 Reviews (score out of 100, then excerpt):
 {{reviews}}
 
-Summarise what critics like and dislike about the game. Return 3-5 short likes and 3-5 short dislikes (each 2-6 words, concrete, no score numbers) and a one-paragraph verdict (max 60 words). If reviews are almost uniformly positive, dislikes may be fewer. Write in English.`;
+Summarise what critics like and dislike about the game. Return 3-5 short likes and 3-5 short dislikes (each 2-6 words, concrete, no score numbers) and a one-paragraph verdict (max 60 words). If reviews are almost uniformly positive, return fewer dislikes or none. Never write points that only state an absence, like "No negative feedback". Write in English.`;
 
 const USER_PROMPT = `You analyse player (user) reviews of the video game "{{title}}" ({{genres}}).
 
 Reviews (score out of 10, then excerpt):
 {{reviews}}
 
-Summarise what players like and dislike. Return 3-5 short likes and 3-5 short dislikes (each 2-6 words, concrete: performance, difficulty, story, monetisation, etc.) and a one-paragraph verdict (max 60 words). Ignore spam and off-topic text. Write in English.`;
+Summarise what players like and dislike. Return 3-5 short likes and 3-5 short dislikes (each 2-6 words, concrete: performance, difficulty, story, monetisation, etc.) and a one-paragraph verdict (max 60 words). Ignore spam and off-topic text. If players raise no real complaints, return an empty dislikes list rather than points like "No negative feedback". Write in English.`;
 
 const TRANSCRIBE_PROMPT = `Transcribe what the narrator (the YouTuber/let's-player) says in this video segment, verbatim, in the original language. Speech only: no descriptions of visuals, no timestamps, no speaker labels. If nobody speaks, answer with an empty string.`;
 
