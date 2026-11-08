@@ -165,7 +165,7 @@ export function WorkersView() {
             <h1 className="text-[clamp(34px,3.6vw,44px)] font-semibold tracking-[-0.03em]">Workers</h1>
             <p className="mt-1 text-[15px] text-muted">Live view of agents, prompts and tool calls</p>
           </div>
-          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 lg:max-w-[700px] lg:flex-nowrap">
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 max-lg:basis-full lg:max-w-[700px] lg:flex-nowrap">
             <Kpi icon={<Cpu className="h-4 w-4 text-good" />} label="Active Workers" value={`${runningCount} / ${enabledCount}`}>
               <Sparkline values={durationSeries.length > 1 ? durationSeries : [0, 0]} width={70} height={34} fill={false} />
             </Kpi>
