@@ -20,16 +20,16 @@
 
 ## 5. Metacritic ingestion
 
-- [ ] 5.1 Implement Metacritic client (finder new releases / browse pages, product, per-platform user scores, critic/user stats, reviews) with sequential throttling and mapping to domain types; verify fixture-based mapping tests
-- [ ] 5.2 Implement daily selection (New Releases then See All pages, processed-today set, cursor, timezone rollover); verify unit tests for first run, later run, rollover
-- [ ] 5.3 Implement upsert of games/platforms and run bookkeeping (runs, run_nodes, run_events, added/updated counts, stale-run recovery); verify unit tests for upsert idempotency and stale recovery
+- [x] 5.1 Implement Metacritic client (finder new releases / browse pages, product, per-platform user scores, critic/user stats, reviews) with sequential throttling and mapping to domain types; verify fixture-based mapping tests
+- [x] 5.2 Implement daily selection (New Releases then See All pages, processed-today set, cursor, timezone rollover); verify unit tests for first run, later run, rollover
+- [x] 5.3 Implement upsert of games/platforms and run bookkeeping (runs, run_nodes, run_events, added/updated counts, stale-run recovery); verify unit tests for upsert idempotency and stale recovery
 
 ## 6. AI enrichment
 
-- [ ] 6.1 Implement critic/user review summaries (balanced sample, skip on zero, regenerate on count change); verify unit tests for sampling and skip logic
-- [ ] 6.2 Implement YouTube search parsing and candidate filtering, transcription with fallback candidate, daily video budget and let's-play conclusion; verify unit tests for filtering and budget
-- [ ] 6.3 Implement embeddings + similarity (cosine blended with metadata, fallback); verify unit tests for ranking and fallback
-- [ ] 6.4 Implement custom prompt nodes and analytics key insights generation; verify unit test that custom node output is stored per game
+- [x] 6.1 Implement critic/user review summaries (balanced sample, skip on zero, regenerate on count change); verify unit tests for sampling and skip logic
+- [x] 6.2 Implement YouTube search parsing and candidate filtering, transcription with fallback candidate, daily video budget and let's-play conclusion; verify unit tests for filtering and budget
+- [x] 6.3 Implement embeddings + similarity (cosine blended with metadata, fallback); verify unit tests for ranking and fallback
+- [x] 6.4 Implement custom prompt nodes and analytics key insights generation; verify unit test that custom node output is stored per game
 
 ## 7. Worker process
 
