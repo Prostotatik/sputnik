@@ -169,7 +169,7 @@ export function Backdrop({ tone = "mono" }: { tone?: "mono" | "violet" }) {
   const c2 = tone === "mono" ? "#6b6b78" : "#6d4dff";
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <svg className="absolute -left-40 top-[30%] h-[900px] w-[520px] opacity-60" viewBox="0 0 520 900" fill="none">
+      <svg className="absolute -left-40 top-[30%] h-[900px] w-[520px] opacity-90" viewBox="0 0 520 900" fill="none">
         <defs>
           <linearGradient id={`rib-${tone}`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor={c1} stopOpacity="0.9" />
@@ -188,7 +188,7 @@ export function Backdrop({ tone = "mono" }: { tone?: "mono" | "violet" }) {
             strokeWidth={46 - i * 9}
             strokeLinecap="round"
             filter={`url(#soft-${tone})`}
-            opacity={0.55 - i * 0.1}
+            opacity={0.8 - i * 0.12}
           />
         ))}
       </svg>

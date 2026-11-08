@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #070709;
-  --color-panel: #111114;
-  --color-panel-2: #16161b;
+  --color-bg: #0b0b0d;
+  --color-panel: #151519;
+  --color-panel-2: #1a1a1f;
   --color-panel-3: #1d1d23;
   --color-line: #23232a;
   --color-line-2: #2e2e37;
@@ -53,6 +53,11 @@ body {
 }
 
 @layer components {
+  .card,
+  .card-glass {
+    /* Grid/flex items must be allowed to shrink below their content width (mobile). */
+    min-width: 0;
+  }
   .card {
     background: color-mix(in oklab, var(--color-panel) 92%, transparent);
     border: 1px solid var(--color-line);

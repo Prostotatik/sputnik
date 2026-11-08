@@ -16,7 +16,7 @@ import { PipelineGraph, type NodeExec } from "./pipeline-graph";
 
 function Kpi({ icon, label, value, children }: { icon: React.ReactNode; label: string; value: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="card-glass flex min-w-[160px] flex-1 items-end justify-between gap-2 px-4 py-4">
+    <div className="card-glass flex min-w-[160px] flex-1 items-end justify-between gap-2 px-4 py-4 max-sm:basis-full">
       <div>
         <p className="flex items-center gap-2.5 text-[13px] whitespace-nowrap text-muted">
           {icon}

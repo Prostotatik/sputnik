@@ -224,7 +224,8 @@ export function MonitoringView() {
               </ul>
             )}
             {data && data.models.length > 0 && (
-              <table className="mt-5 w-full text-left text-[12.5px]">
+              <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[460px] text-left text-[12.5px]">
                 <thead className="text-[11.5px] text-muted">
                   <tr>
                     <th className="pb-1.5 font-normal">Model</th>
@@ -251,6 +252,7 @@ export function MonitoringView() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </section>
 

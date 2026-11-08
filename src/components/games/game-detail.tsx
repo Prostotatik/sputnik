@@ -71,9 +71,9 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
   return (
     <article aria-labelledby="game-title" className="relative">
       <div className="relative overflow-hidden rounded-2xl border border-line/60">
-        <HeroImage urls={[game.heroUrl, ...youtubeHero, game.cardImageUrl, game.coverUrl]} className="absolute inset-0 h-full w-full object-cover opacity-70" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(7_7_9/0.96)_0%,rgb(7_7_9/0.82)_42%,rgb(7_7_9/0.2)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(7_7_9/0.3)_0%,transparent_30%,rgb(7_7_9/0.9)_100%)]" />
+        <HeroImage urls={[game.heroUrl, ...youtubeHero, game.cardImageUrl, game.coverUrl]} className="absolute inset-0 h-full w-full object-cover opacity-95" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(11_11_13/0.92)_0%,rgb(11_11_13/0.72)_45%,rgb(11_11_13/0)_80%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_11_13/0.15)_0%,transparent_35%,rgb(11_11_13/0.75)_100%)]" />
 
         <div className="relative px-6 pt-6 pb-7 md:px-8">
           <button type="button" onClick={onBack} className="flex items-center gap-2 text-[13px] text-fg/80 hover:text-fg lg:pointer-events-none lg:opacity-0">
