@@ -33,7 +33,7 @@ type FlowData = { node: PipelineNode; exec: NodeExec | null; now: number; select
 
 const W = 190;
 const ROOT_W = 170;
-const COL = 310;
+const COL = 270;
 const ROW = 72;
 
 /** Tree layout: columns by depth, leaves stacked, parents centred on their children. */

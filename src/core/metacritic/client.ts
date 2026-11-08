@@ -17,6 +17,8 @@ export interface MetacriticOptions {
   delayMs?: number;
   fetchImpl?: typeof fetch;
   retries?: number;
+  /** Waits between attempts after a network failure (e.g. right after the machine wakes up). */
+  networkRetryDelaysMs?: number[];
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -28,12 +30,14 @@ export class MetacriticClient {
   private readonly delayMs: number;
   private readonly fetchImpl: typeof fetch;
   private readonly retries: number;
+  private readonly networkDelays: number[];
   requests = 0;
 
   constructor(opts: MetacriticOptions = {}) {
     this.delayMs = opts.delayMs ?? 700;
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.retries = opts.retries ?? 2;
+    this.networkDelays = opts.networkRetryDelaysMs ?? [2_000, 5_000, 10_000, 20_000];
   }
 
   private get(path: string): Promise<unknown> {
@@ -55,8 +59,8 @@ export class MetacriticClient {
           signal: AbortSignal.timeout(30_000),
         });
       } catch (err) {
-        if (attempt < this.retries) {
-          await sleep(1000 * 2 ** attempt);
+        if (attempt < this.networkDelays.length) {
+          await sleep(this.networkDelays[attempt]);
           continue;
         }
         throw new MetacriticError(`Network error for ${path}: ${(err as Error).message}`);

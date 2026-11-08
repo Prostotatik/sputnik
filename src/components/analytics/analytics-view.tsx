@@ -107,7 +107,7 @@ export function AnalyticsView() {
 
         {data && !empty && (
           <>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <KpiCard icon={<Gamepad2 className="h-5 w-5 text-fg" />} label="Total Games Tracked" value={num(data.kpis.totalGames.value)} delta={data.kpis.totalGames.delta} series={data.kpis.totalGames.series} color="#4ade80" />
               <KpiCard icon={<Star className="h-5 w-5 fill-yellow text-yellow" />} label="Average Metascore" value={data.kpis.avgMetascore.value?.toFixed(1) ?? "—"} delta={data.kpis.avgMetascore.delta} series={data.kpis.avgMetascore.series} color="#a855f7" />
               <KpiCard icon={<Users className="h-5 w-5 fill-sky text-sky" />} label="Average Userscore" value={data.kpis.avgUserscore.value?.toFixed(1) ?? "—"} delta={data.kpis.avgUserscore.delta} series={data.kpis.avgUserscore.series} color="#3b82f6" />
@@ -126,7 +126,7 @@ export function AnalyticsView() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1.25fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.25fr]">
               <section className="card p-5">
                 <CardTitle
                   right={
@@ -185,7 +185,7 @@ export function AnalyticsView() {
               </section>
             </div>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1.25fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.25fr]">
               <section className="card p-5">
                 <CardTitle>Supply vs Demand</CardTitle>
                 <ul className="mt-2 flex gap-5 text-[12px] text-muted">
@@ -234,7 +234,7 @@ export function AnalyticsView() {
               </section>
             </div>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_1fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
               <section className="card p-5">
                 <CardTitle>
                   <span className="flex items-center gap-2">
@@ -293,7 +293,7 @@ export function AnalyticsView() {
               </section>
             </div>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1.6fr_1fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1.6fr_1fr]">
               <section className="card p-5">
                 <CardTitle right={<span className="pill px-3 py-1.5 text-[12px] text-muted">Player Interest</span>}>Top Games by Player Interest</CardTitle>
                 {data.topGames.length === 0 ? (

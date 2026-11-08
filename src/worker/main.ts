@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb, type Db } from "@/lib/db/client";
 import { runs, workerHeartbeat } from "@/lib/db/schema";
 import { AiService } from "@/core/ai/service";
@@ -6,18 +6,12 @@ import { MetacriticClient } from "@/core/metacritic/client";
 import { ensurePipeline, listNodes, nodeOfType } from "@/core/pipeline/repo";
 import { activeRun, recoverStaleRuns, takePendingRequest } from "@/core/runs";
 import { executeRun } from "./runner";
+import { nextRunAt } from "./schedule";
 
 const POLL_MS = 2_000;
 const HEARTBEAT_MS = 5_000;
 
 const log = (msg: string) => console.log(`[worker ${new Date().toISOString()}] ${msg}`);
-
-/** Next scheduled start: interval after the last scheduled or manual run started, or now. */
-export function nextRunAt(db: Db, now = Date.now()): number {
-  const sync = nodeOfType(listNodes(db), "sync")!;
-  const last = db.select({ startedAt: runs.startedAt }).from(runs).orderBy(desc(runs.id)).get();
-  return last ? last.startedAt + sync.params.intervalMinutes * 60_000 : now;
-}
 
 function beat(db: Db, startedAt: number, state: "idle" | "running"): void {
   const row = { id: 1, pid: process.pid, startedAt, beatAt: Date.now(), state, nextRunAt: nextRunAt(db) };

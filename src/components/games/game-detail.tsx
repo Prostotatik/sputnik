@@ -133,7 +133,7 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
               </table>
             )}
             {game.description ? (
-              <div className="mt-4 max-w-[560px]">
+              <div className="mt-4 max-w-[560px] min-[1400px]:max-w-[520px]">
                 <p className={clsx("whitespace-pre-line text-[14px] leading-[1.55] text-fg/80", !expanded && "line-clamp-5")}>{game.description}</p>
                 {game.description.length > 320 && (
                   <button type="button" onClick={() => setExpanded((e) => !e)} className="mt-1 text-xs text-accent-2 hover:underline">
@@ -146,7 +146,7 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
             )}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3 md:absolute md:right-6 md:bottom-7 md:mt-0">
+          <div className="mt-6 flex flex-wrap gap-3 min-[1400px]:absolute min-[1400px]:top-1/2 min-[1400px]:right-6 min-[1400px]:mt-0">
             {game.videoUrl ? (
               <a href={game.videoUrl} target="_blank" rel="noreferrer" className="card-glass flex items-center gap-3 px-5 py-3 text-[13px] hover:border-line-2" title={game.videoTitle ?? "Watch video"}>
                 <Play className="h-4 w-4" /> Watch Trailer <ExternalLink className="h-3.5 w-3.5 text-muted" />
@@ -213,7 +213,7 @@ export function SimilarGames({ items, onSelect }: { items: GameDetailData["simil
       {items.length === 0 ? (
         <EmptyState title="No similar games yet">Similar titles appear as the library grows.</EmptyState>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {shown.map((s) => (
             <li key={s.slug}>
               <button type="button" onClick={() => onSelect(s.slug)} className="group relative block h-[170px] w-full overflow-hidden rounded-xl text-left">
@@ -251,7 +251,7 @@ export function YoutubeInsight({ insight }: { insight: GameDetailData["insight"]
       {!insight ? (
         <EmptyState title="No let's-play analysed yet">The worker looks for a popular commentated let&apos;s-play once the game has reviews.</EmptyState>
       ) : (
-        <div className="grid grid-cols-[150px_1fr] gap-3.5">
+        <div className="grid grid-cols-[140px_1fr] gap-3.5">
           <a href={insight.videoUrl} target="_blank" rel="noreferrer" className="group relative block h-[120px] overflow-hidden rounded-lg" aria-label={`Watch ${insight.videoTitle}`}>
             <HeroImage urls={[`https://i.ytimg.com/vi/${insight.videoId}/hqdefault.jpg`]} className="h-full w-full object-cover" />
             <span className="absolute inset-0 flex items-center justify-center bg-black/25">

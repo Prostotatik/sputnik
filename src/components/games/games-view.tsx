@@ -147,7 +147,7 @@ export function GamesView() {
         </div>
       </div>
       {detailData && (
-        <div className="relative z-10 grid items-start gap-5 px-5 pb-5 md:px-6 xl:grid-cols-[1fr_370px]">
+        <div className="relative z-10 grid items-start gap-5 px-5 pb-5 md:px-6 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_370px]">
           <SimilarGames items={detailData.similar} onSelect={select} />
           <YoutubeInsight insight={detailData.insight} />
         </div>

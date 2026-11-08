@@ -41,7 +41,7 @@ export function ServiceMonitor() {
   const nodeBars = (status?.nodes ?? []).map((n) => (n.status === "running" ? 1 : n.status === "success" ? 0.6 : n.status === "failed" ? 0.3 : 0.15));
 
   return (
-    <section aria-label="Service monitor" className="card-glass mx-5 mb-6 grid gap-5 p-5 md:mx-6 xl:grid-cols-[minmax(340px,1.3fr)_2fr_auto] xl:items-center">
+    <section aria-label="Service monitor" className="card-glass mx-5 mb-6 grid gap-5 p-5 md:mx-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
       <div className="flex items-center gap-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
@@ -66,10 +66,12 @@ export function ServiceMonitor() {
             </div>
           </div>
         </div>
-        <Sparkline values={status?.activity ?? []} width={120} height={56} />
+        <span className="hidden xl:block">
+          <Sparkline values={status?.activity ?? []} width={120} height={56} />
+        </span>
       </div>
 
-      <dl className="grid grid-cols-3 gap-4 border-line xl:border-x xl:px-6">
+      <dl className="grid grid-cols-3 gap-4 border-line lg:border-x lg:px-5">
         <div>
           <dt className="flex items-center gap-1.5 text-xs text-muted">
             <Clock3 className="h-3.5 w-3.5 text-good" /> Next run

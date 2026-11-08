@@ -57,7 +57,7 @@ export function MonitoringView() {
         <h1 className="text-[clamp(36px,3.8vw,48px)] font-semibold tracking-[-0.03em]">Monitoring</h1>
         <p className="mt-1 text-[15px] text-muted">Service health, throughput and AI token spend in real time</p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
           <Stat
             icon={<HeartPulse className={clsx("h-4 w-4", worker?.online ? "text-good" : "text-bad")} />}
             label="Worker"
@@ -72,7 +72,7 @@ export function MonitoringView() {
           <Stat icon={<Coins className="h-4 w-4 text-orange" />} label="Spend today (estimate)" value={usd(data?.today.cost ?? 0)} sub="Paid-tier equivalent; free tier bills $0" />
         </div>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1.4fr]">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.4fr]">
           <section className="card p-5">
             <CardTitle right={<span className={clsx("rounded-full px-3 py-1 text-[12px]", active ? "bg-good/15 text-good" : "bg-panel-3 text-muted")}>{active ? "Running" : run ? `Last: ${run.status}` : "No runs"}</span>}>Current run</CardTitle>
             {!run ? (
@@ -198,7 +198,7 @@ export function MonitoringView() {
           </table>
         </section>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1fr]">
           <section className="card p-5">
             <CardTitle>AI usage by step today</CardTitle>
             {!data?.purposes.length ? (

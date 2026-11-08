@@ -82,4 +82,24 @@ describe("MetacriticClient", () => {
     });
     await expect(notFound.product("missing")).rejects.toMatchObject({ status: 404 });
   });
+
+  it("keeps retrying network failures (e.g. Wi-Fi still reconnecting after wake)", async () => {
+    let n = 0;
+    const fetchImpl = vi.fn(async () => {
+      n++;
+      if (n <= 3) throw new TypeError("fetch failed");
+      return new Response(JSON.stringify(finder), { status: 200 });
+    }) as unknown as typeof fetch;
+    const client = new MetacriticClient({ delayMs: 0, fetchImpl, networkRetryDelaysMs: [1, 1, 1, 1] });
+    await expect(client.browseNew(1)).resolves.toMatchObject({ total: expect.any(Number) });
+    expect(n).toBe(4);
+    const down = new MetacriticClient({
+      delayMs: 0,
+      networkRetryDelaysMs: [1, 1],
+      fetchImpl: (async () => {
+        throw new TypeError("fetch failed");
+      }) as unknown as typeof fetch,
+    });
+    await expect(down.product("x")).rejects.toThrow(/Network error/);
+  });
 });

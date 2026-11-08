@@ -16,7 +16,7 @@ import { PipelineGraph, type NodeExec } from "./pipeline-graph";
 
 function Kpi({ icon, label, value, children }: { icon: React.ReactNode; label: string; value: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="card-glass flex min-w-[210px] flex-1 items-end justify-between gap-3 px-5 py-4">
+    <div className="card-glass flex min-w-[160px] flex-1 items-end justify-between gap-2 px-4 py-4">
       <div>
         <p className="flex items-center gap-2.5 text-[13px] whitespace-nowrap text-muted">
           {icon}
@@ -165,7 +165,7 @@ export function WorkersView() {
             <h1 className="text-[clamp(34px,3.6vw,44px)] font-semibold tracking-[-0.03em]">Workers</h1>
             <p className="mt-1 text-[15px] text-muted">Live view of the collection pipeline, its prompts and tools</p>
           </div>
-          <div className="flex flex-1 flex-wrap justify-end gap-4 xl:max-w-[720px]">
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 lg:max-w-[580px] lg:flex-nowrap">
             <Kpi icon={<Cpu className="h-4 w-4 text-good" />} label="Active Workers" value={`${runningCount} / ${enabledCount}`}>
               <Sparkline values={durationSeries.length > 1 ? durationSeries : [0, 0]} width={70} height={34} fill={false} />
             </Kpi>
@@ -217,7 +217,7 @@ export function WorkersView() {
           )}
         </div>
 
-        <div className="mt-2 grid gap-4 xl:grid-cols-[1fr_170px]">
+        <div className="mt-2 grid gap-4 lg:grid-cols-[1fr_160px]">
           <div className="relative min-w-0">
             {nodes.length ? (
               <PipelineGraph nodes={nodes} exec={exec} selectedId={selectedId} onSelect={setSelectedId} now={now} runLabel={run ? `#${run.id}` : null} />
@@ -225,7 +225,7 @@ export function WorkersView() {
               <EmptyState title={view.loading ? "Loading pipeline…" : "No nodes match this search"} className="h-[520px]" />
             )}
           </div>
-          <aside className="card-glass hidden h-fit space-y-2.5 p-4 text-[12.5px] xl:block" aria-label="Legend">
+          <aside className="card-glass hidden h-fit space-y-2.5 p-4 text-[12.5px] lg:block" aria-label="Legend">
             {LEGEND_KINDS.map((t) => {
               const m = NODE_META[t];
               return (
@@ -245,7 +245,7 @@ export function WorkersView() {
           </aside>
         </div>
 
-        <div className="mt-4 grid items-start gap-5 pb-8 xl:grid-cols-2">
+        <div className="mt-4 grid items-start gap-5 pb-8 lg:grid-cols-2">
           <NodeDetails
             node={selected}
             exec={selectedExec}
@@ -285,8 +285,8 @@ export function WorkersView() {
                       {e.level === "error" ? <X className="h-3.5 w-3.5 text-black" /> : <CheckCircle2 className="h-4 w-4 text-black" />}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[14.5px] text-fg">{e.message}</p>
-                      <p className="mt-0.5 text-[12.5px] text-muted">
+                      <p className="text-[14.5px] break-words text-fg">{e.message}</p>
+                      <p className="mt-0.5 text-[12.5px] break-words text-muted">
                         {clock(e.ts)}
                         {e.detail ? ` · ${e.detail}` : ""}
                       </p>
