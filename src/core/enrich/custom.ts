@@ -1,0 +1,91 @@
+import { z } from "zod";
+import type { Db } from "@/lib/db/client";
+import { analyticsInsights, gameCustomFields } from "@/lib/db/schema";
+import type { AiContext, AiService } from "../ai/service";
+import { metricsForPrompt, type AnalyticsData } from "../analytics";
+import { renderPrompt } from "../pipeline/defaults";
+
+export interface GameContext {
+  title: string;
+  genres: string[];
+  platforms: string[];
+  developer: string | null;
+  description: string | null;
+  metascore: number | null;
+  userscore: number | null;
+  criticVerdict: string | null;
+  userVerdict: string | null;
+  letsplayConclusion: string | null;
+}
+
+export function gamePromptVars(g: GameContext): Record<string, string> {
+  return {
+    title: g.title,
+    genres: g.genres.join(", ") || "unknown genre",
+    platforms: g.platforms.join(", ") || "unknown",
+    developer: g.developer ?? "unknown",
+    description: (g.description ?? "").slice(0, 1500),
+    metascore: g.metascore === null ? "n/a" : String(g.metascore),
+    userscore: g.userscore === null ? "n/a" : String(g.userscore),
+    criticVerdict: g.criticVerdict ?? "n/a",
+    userVerdict: g.userVerdict ?? "n/a",
+    letsplay: g.letsplayConclusion ?? "n/a",
+  };
+}
+
+/** Runs a user-defined prompt node for one game and stores the answer as a custom field. */
+export async function runCustomField(
+  db: Db,
+  ai: AiService,
+  ctx: AiContext & { gameId: number },
+  node: { prompt: string; fieldKey: string; label: string },
+  game: GameContext,
+): Promise<{ value: string; model: string; prompt: string }> {
+  const prompt = renderPrompt(node.prompt, gamePromptVars(game));
+  const res = await ai.text(ctx, prompt);
+  const value = res.value.trim().slice(0, 2000);
+  const row = { gameId: ctx.gameId, key: node.fieldKey, label: node.label, value, updatedAt: Date.now() };
+  db.insert(gameCustomFields)
+    .values(row)
+    .onConflictDoUpdate({ target: [gameCustomFields.gameId, gameCustomFields.key], set: row })
+    .run();
+  return { value, model: res.model, prompt };
+}
+
+const insightsSchema = {
+  type: "object",
+  properties: {
+    insights: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: ["up", "down", "opportunity"] },
+          text: { type: "string" },
+        },
+        required: ["kind", "text"],
+      },
+    },
+  },
+  required: ["insights"],
+};
+
+const insightsValidator = z.object({
+  insights: z.array(z.object({ kind: z.enum(["up", "down", "opportunity"]), text: z.string().min(5) })).min(1).max(5),
+});
+
+/** Generates and stores market key insights from aggregated analytics. */
+export async function generateKeyInsights(
+  db: Db,
+  ai: AiService,
+  ctx: AiContext,
+  template: string,
+  analytics: AnalyticsData,
+): Promise<{ items: z.infer<typeof insightsValidator>["insights"]; model: string; prompt: string } | null> {
+  if ((analytics.kpis.totalGames.value ?? 0) < 3) return null;
+  const prompt = renderPrompt(template, { metrics: metricsForPrompt(analytics) });
+  const res = await ai.json(ctx, prompt, insightsSchema, insightsValidator);
+  const items = res.value.insights.slice(0, 3);
+  db.insert(analyticsInsights).values({ createdAt: Date.now(), runId: ctx.runId ?? null, insights: items, model: res.model }).run();
+  return { items, model: res.model, prompt };
+}

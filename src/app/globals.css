@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b0b0d;
+  --color-panel: #151519;
+  --color-panel-2: #1a1a1f;
+  --color-panel-3: #1d1d23;
+  --color-line: #23232a;
+  --color-line-2: #2e2e37;
+  --color-fg: #ededf0;
+  --color-muted: #8a8a96;
+  --color-dim: #5c5c66;
+  --color-accent: #5458e8;
+  --color-accent-2: #6d70ff;
+  --color-score: #a3e635;
+  --color-good: #4ade80;
+  --color-bad: #ef4444;
+  --color-warn: #f59e0b;
+  --color-violet: #a855f7;
+  --color-sky: #3b82f6;
+  --color-cyan: #38bdf8;
+  --color-orange: #f97316;
+  --color-yellow: #facc15;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 14px;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 50%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a31 transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-2);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@layer components {
+  .card,
+  .card-glass {
+    /* Grid/flex items must be allowed to shrink below their content width (mobile). */
+    min-width: 0;
+  }
+  .card {
+    background: color-mix(in oklab, var(--color-panel) 92%, transparent);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+  .card-glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01)), color-mix(in oklab, var(--color-panel) 80%, transparent);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(14px);
+  }
+  .pill {
+    border: 1px solid var(--color-line-2);
+    background: color-mix(in oklab, var(--color-panel-2) 85%, transparent);
+    border-radius: 12px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    background: #1f1f25;
+    color: #c9c9d1;
+    font-size: 10px;
+    line-height: 1;
+    padding: 4px 6px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary {
+    background: linear-gradient(180deg, #6266f1, #4b4fd8);
+    box-shadow: 0 0 0 1px rgb(129 132 255 / 0.35) inset, 0 8px 24px -8px rgb(84 88 232 / 0.65);
+    border-radius: 12px;
+    color: white;
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(74 222 128 / 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgb(74 222 128 / 0);
+  }
+}
+
+.live-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.flow-dash {
+  animation: dash 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .flow-dash {
+    animation: none;
+  }
+}
