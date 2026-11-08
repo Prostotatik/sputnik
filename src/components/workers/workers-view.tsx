@@ -1,30 +1,25 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckCircle2, Clock3, Cpu, Plus, RotateCcw, X } from "lucide-react";
+import { Plus, RotateCcw, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { WorkersData } from "@/core/queries";
 import type { Run } from "@/lib/db/schema";
 import { clock, duration, num } from "@/lib/client/format";
 import { useJson, useNow } from "@/lib/client/hooks";
-import { Backdrop, EmptyState, RunNowButton, SearchBox, TopBar } from "../shell";
+import { EmptyState, RunNowButton, SearchBox, TelemetryDot, TopBar } from "../shell";
 import { useStatus } from "../status";
-import { CardTitle, Select, Sparkline } from "../ui";
+import { CardTitle, Select } from "../ui";
 import { NODE_META, STATUS_META } from "./node-meta";
 import { NodeDetails } from "./node-details";
 import { PipelineGraph, type NodeExec } from "./pipeline-graph";
 
-function Kpi({ icon, label, value, children }: { icon: React.ReactNode; label: string; value: React.ReactNode; children?: React.ReactNode }) {
+function Kpi({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
   return (
-    <div className="card-glass flex min-w-[160px] flex-1 items-end justify-between gap-2 px-4 py-4 max-sm:basis-full">
-      <div>
-        <p className="flex items-center gap-2.5 text-[13px] whitespace-nowrap text-muted">
-          {icon}
-          {label}
-        </p>
-        <p className="mt-2 text-[22px] font-semibold tracking-[-0.01em] whitespace-nowrap">{value}</p>
-      </div>
-      {children}
+    <div className="card min-w-40 flex-1 px-4 py-4 max-sm:basis-full">
+      <p className="text-[13px] whitespace-nowrap text-muted">{label}</p>
+      <p className="mt-2 text-2xl font-medium whitespace-nowrap tabular-nums">{value}</p>
+      {sub && <p className="mt-1 font-mono text-xs text-dim">{sub}</p>}
     </div>
   );
 }
@@ -50,8 +45,8 @@ function AddRule({ onAdded }: { onAdded: (id: string) => void }) {
   };
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="pill flex h-10 items-center gap-2 px-4 text-[13px] text-fg hover:border-accent/60">
-        <Plus className="h-4 w-4" /> Add rule
+      <button type="button" onClick={() => setOpen(true)} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
+        <Plus className="h-4 w-4 text-dim" strokeWidth={1.5} /> Add rule
       </button>
     );
   }
@@ -65,19 +60,19 @@ function AddRule({ onAdded }: { onAdded: (id: string) => void }) {
     >
       <label className="flex flex-col gap-1 text-[11px] text-muted">
         Field shown on game cards
-        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Monetization" required className="h-9 w-48 rounded-lg border border-line-2 bg-black/30 px-3 text-[13px] text-fg focus:outline-none" />
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Monetization" required className="h-9 w-48 rounded-lg border border-line bg-panel-2 px-3 text-[13px] text-fg focus:border-line-2 focus:outline-none" />
       </label>
       <label className="flex flex-col gap-1 text-[11px] text-muted">
         Key (optional)
-        <input value={fieldKey} onChange={(e) => setFieldKey(e.target.value)} placeholder="monetization" className="h-9 w-36 rounded-lg border border-line-2 bg-black/30 px-3 text-[13px] text-fg focus:outline-none" />
+        <input value={fieldKey} onChange={(e) => setFieldKey(e.target.value)} placeholder="monetization" className="h-9 w-36 rounded-lg border border-line bg-panel-2 px-3 text-[13px] text-fg focus:border-line-2 focus:outline-none" />
       </label>
-      <button type="submit" className="btn-primary h-9 px-4 text-[12.5px]">
+      <button type="submit" className="btn-primary h-9 px-4 text-[13px] font-medium">
         Add rule
       </button>
       <button type="button" onClick={() => setOpen(false)} aria-label="Cancel" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:text-fg">
         <X className="h-4 w-4" />
       </button>
-      {errors.length > 0 && <p role="alert" className="w-full text-[12px] text-bad">{errors.join("; ")}</p>}
+      {errors.length > 0 && <p role="alert" className="w-full text-xs text-bad">{errors.join("; ")}</p>}
     </form>
   );
 }
@@ -128,8 +123,6 @@ export function WorkersView() {
   const enabledCount = (data?.nodes ?? []).filter((n) => n.enabled).length;
   const runningCount = (data?.exec ?? []).filter((e) => e.status === "running").length;
   const recentRuns = runs.data ?? [];
-  const processedSeries = [...recentRuns].reverse().map((r) => r.processed);
-  const durationSeries = [...recentRuns].reverse().filter((r) => r.finishedAt).map((r) => (r.finishedAt! - r.startedAt) / 1000);
   const events = data?.events ?? [];
 
   const resetAll = async () => {
@@ -140,9 +133,8 @@ export function WorkersView() {
 
   return (
     <>
-      <Backdrop tone="violet" />
       <TopBar
-        left={<SearchBox value={filter} onChange={setFilter} placeholder="Search nodes..." />}
+        left={<SearchBox value={filter} onChange={setFilter} placeholder="Search steps" />}
         right={
           <>
             <AddRule
@@ -151,35 +143,29 @@ export function WorkersView() {
                 view.refresh();
               }}
             />
-            <button type="button" onClick={resetAll} className="pill flex h-10 items-center gap-2 px-4 text-[13px] text-muted hover:text-fg">
-              <RotateCcw className="h-4 w-4" /> Reset to defaults
+            <button type="button" onClick={resetAll} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
+              <RotateCcw className="h-4 w-4 text-dim" strokeWidth={1.5} /> Reset to defaults
             </button>
             <RunNowButton />
           </>
         }
       />
 
-      <div className="relative z-10 px-5 md:px-6">
+      <div className="relative z-10 px-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="mt-3 text-[clamp(32px,3.3vw,40px)] leading-[1.1] font-semibold tracking-[-0.03em]">Workers</h1>
-            <p className="mt-1 text-[14px] text-muted">Live view of agents, prompts and tool calls</p>
+            <h1 className="mt-3 text-[32px] leading-[1.15] font-medium">Workers</h1>
+            <p className="mt-1 text-sm text-muted">The collection pipeline and the rules each step follows</p>
           </div>
           <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 max-lg:basis-full lg:max-w-[700px] lg:flex-nowrap">
-            <Kpi icon={<Cpu className="h-4 w-4 text-good" />} label="Active Workers" value={`${runningCount} / ${enabledCount}`}>
-              <Sparkline values={durationSeries.length > 1 ? durationSeries : [0, 0]} width={70} height={34} fill={false} />
-            </Kpi>
-            <Kpi icon={<CheckCircle2 className="h-4 w-4 text-violet" />} label="Processed Today" value={`${num(status?.totals.processedToday ?? 0)} games`}>
-              <Sparkline values={processedSeries.length > 1 ? processedSeries : [0, 0]} color="var(--color-violet)" width={70} height={34} fill={false} />
-            </Kpi>
-            <Kpi icon={<Clock3 className="h-4 w-4" />} label="Last Run" value={clock(status?.run?.startedAt)}>
-              <span className={clsx("mb-2 h-2 w-2 rounded-full", status?.run?.status === "failed" ? "bg-bad" : "bg-good")} />
-            </Kpi>
+            <Kpi label="Steps running" value={`${runningCount} of ${enabledCount}`} sub="enabled steps" />
+            <Kpi label="Processed today" value={num(status?.totals.processedToday ?? 0)} sub="games" />
+            <Kpi label="Last run" value={clock(status?.run?.startedAt)} sub={status?.run ? (status.run.status === "failed" ? "failed" : status.run.status === "running" ? "in progress" : "finished") : "no runs yet"} />
           </div>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <div className="pill flex p-1" role="tablist" aria-label="Mode">
+          <div className="pill flex p-0.5" role="tablist" aria-label="Mode">
             {(["live", "history"] as const).map((m) => (
               <button
                 key={m}
@@ -190,9 +176,9 @@ export function WorkersView() {
                   setMode(m);
                   if (m === "history" && !historyRun && recentRuns[0]) setHistoryRun(String(recentRuns[0].id));
                 }}
-                className={clsx("flex h-9 items-center gap-2 rounded-[10px] px-5 text-[14px]", mode === m ? "bg-panel-3 text-fg" : "text-muted hover:text-fg")}
+                className={clsx("flex h-8 items-center gap-2 rounded-lg px-4 text-[13px] transition-colors", mode === m ? "bg-panel-3 text-fg" : "text-muted hover:text-fg")}
               >
-                {m === "live" && <span className="live-dot h-2 w-2 rounded-full bg-good" />}
+                {m === "live" && <TelemetryDot state={status?.active ? "running" : status?.worker.online ? "idle" : "offline"} />}
                 {m === "live" ? "Live" : "History"}
               </button>
             ))}
@@ -204,15 +190,15 @@ export function WorkersView() {
               onChange={setHistoryRun}
               options={recentRuns.map((r) => ({
                 value: String(r.id),
-                label: `Run #${r.id} · ${new Date(r.startedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${r.status}`,
+                label: `Run #${r.id}, ${new Date(r.startedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}, ${r.status}`,
               }))}
-              className="w-[300px]"
+              className="w-72"
             />
           )}
           {run && (
-            <p className="text-[13px] text-muted">
-              Run #{run.id} · {run.trigger} · {run.processed}/{run.total} games · {run.added} added · {run.updated} updated
-              {run.errors ? ` · ${run.errors} errors` : ""}
+            <p className="font-mono text-xs text-dim">
+              Run #{run.id}, {run.trigger}, {run.processed}/{run.total} games, {run.added} added, {run.updated} updated
+              {run.errors ? `, ${run.errors} errors` : ""}
             </p>
           )}
         </div>
@@ -225,20 +211,20 @@ export function WorkersView() {
               <EmptyState title={view.loading ? "Loading pipeline…" : "No nodes match this search"} className="h-[520px]" />
             )}
           </div>
-          <aside className="card-glass hidden h-fit space-y-2.5 p-4 text-[12.5px] lg:block" aria-label="Legend">
+          <aside className="card hidden h-fit space-y-2 p-4 text-[13px] lg:block" aria-label="Legend">
             {LEGEND_KINDS.map((t) => {
               const m = NODE_META[t];
               return (
-                <p key={t} className="flex items-center gap-2.5 text-fg/85">
-                  <span className="h-3 w-3 rounded-full border-2" style={{ borderColor: m.color }} />
+                <p key={t} className="flex items-center gap-2.5 text-muted">
+                  <m.icon className="h-4 w-4 shrink-0 text-dim" strokeWidth={1.5} />
                   {m.kind}
                 </p>
               );
             })}
-            <p className="border-t border-line pt-3 text-muted">Status</p>
+            <p className="border-t border-line pt-3 text-xs text-dim">Status</p>
             {(["running", "queued", "success", "failed"] as const).map((s) => (
-              <p key={s} className="flex items-center gap-2.5 text-fg/85">
-                <span className="h-3 w-3 rounded-full" style={{ background: STATUS_META[s].color }} />
+              <p key={s} className="flex items-center gap-2.5 text-muted">
+                <span className="mx-[5px] h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[s].color }} />
                 {{ running: "Running", queued: "Pending", success: "Success", failed: "Failed" }[s]}
               </p>
             ))}
@@ -261,34 +247,33 @@ export function WorkersView() {
             <CardTitle
               right={
                 events.length > 6 && (
-                  <button type="button" onClick={() => setShowAllEvents((s) => !s)} className="text-[13px] text-muted hover:text-fg">
+                  <button type="button" onClick={() => setShowAllEvents((s) => !s)} className="text-xs text-dim transition-colors hover:text-fg">
                     {showAllEvents ? "Show less" : "See all"}
                   </button>
                 )
               }
             >
-              <span id="history-title" className="text-[17px]">Run History</span>
+              <span id="history-title">Run history</span>
             </CardTitle>
             {events.length === 0 ? (
-              <EmptyState title="No runs yet">Press Run Now or wait for the hourly schedule.</EmptyState>
+              <EmptyState title="No runs yet">Press Run now or wait for the hourly schedule.</EmptyState>
             ) : (
-              <ol className="relative mt-5 space-y-5 pl-1">
-                <span className="absolute top-3 bottom-3 left-[13px] w-px bg-line-2" aria-hidden />
+              <ol className="relative mt-4 space-y-4">
+                <span className="absolute top-2 bottom-2 left-[3px] w-px bg-line-2" aria-hidden />
                 {(showAllEvents ? events : events.slice(0, 6)).map((e) => (
                   <li key={e.id} className="relative flex gap-4">
                     <span
+                      aria-hidden
                       className={clsx(
-                        "z-10 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full",
-                        e.level === "error" ? "bg-bad" : e.level === "warn" ? "bg-warn" : e.level === "success" ? "bg-good" : "bg-[#3b9b4f]",
+                        "z-10 mt-1.5 h-[7px] w-[7px] shrink-0 rounded-full ring-4 ring-panel",
+                        e.level === "error" ? "bg-bad" : e.level === "warn" ? "bg-warn" : e.level === "success" ? "bg-good" : "bg-dim",
                       )}
-                    >
-                      {e.level === "error" ? <X className="h-3.5 w-3.5 text-black" /> : <CheckCircle2 className="h-4 w-4 text-black" />}
-                    </span>
+                    />
                     <div className="min-w-0">
-                      <p className="text-[14.5px] break-words text-fg">{e.message}</p>
-                      <p className="mt-0.5 text-[12.5px] break-words text-muted">
+                      <p className="text-sm break-words text-fg">{e.message}</p>
+                      <p className="mt-0.5 font-mono text-xs break-words text-dim">
                         {clock(e.ts)}
-                        {e.detail ? ` · ${e.detail}` : ""}
+                        {e.detail ? `, ${e.detail}` : ""}
                       </p>
                     </div>
                   </li>
@@ -297,8 +282,8 @@ export function WorkersView() {
             )}
             {recentRuns.length > 0 && (
               <div className="mt-6 border-t border-line pt-4">
-                <p className="mb-2 text-[12px] text-muted">Recent runs</p>
-                <ul className="space-y-1.5 text-[12.5px]">
+                <p className="mb-2 text-xs text-dim">Recent runs</p>
+                <ul className="space-y-1.5 text-[13px]">
                   {recentRuns.slice(0, 3).map((r) => (
                     <li key={r.id}>
                       <button
@@ -311,10 +296,10 @@ export function WorkersView() {
                       >
                         <span className="flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[r.status === "running" ? "running" : r.status === "success" ? "success" : "failed"].color }} />
-                          Run #{r.id} · {r.trigger}
+                          Run #{r.id}, {r.trigger}
                         </span>
-                        <span className="text-muted">
-                          {r.added} added · {r.updated} updated · {duration((r.finishedAt ?? now) - r.startedAt)}
+                        <span className="font-mono text-xs text-dim">
+                          {r.added} added, {r.updated} updated, {duration((r.finishedAt ?? now) - r.startedAt)}
                         </span>
                       </button>
                     </li>

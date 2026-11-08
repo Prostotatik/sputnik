@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { GameDetailData, GameListItem } from "@/core/queries";
 import { useJson } from "@/lib/client/hooks";
 import { ServiceMonitor } from "../service-monitor";
-import { Backdrop, RunNowButton, SearchBox, TopBar } from "../shell";
+import { RunNowButton, SearchBox, TopBar } from "../shell";
 import { useStatus } from "../status";
 import { Select } from "../ui";
 import { GameDetail, GameExtras, SimilarGames, YoutubeInsight } from "./game-detail";
@@ -14,10 +14,10 @@ import { GameList } from "./game-list";
 
 const PAGE = 10;
 const SORTS = [
-  { value: "metascore", label: "Sort by: Metascore" },
-  { value: "userscore", label: "Sort by: Userscore" },
-  { value: "release", label: "Sort by: Newest release" },
-  { value: "updated", label: "Sort by: Recently updated" },
+  { value: "metascore", label: "Sort: Metascore" },
+  { value: "userscore", label: "Sort: Userscore" },
+  { value: "release", label: "Sort: Newest release" },
+  { value: "updated", label: "Sort: Recently updated" },
 ];
 
 export function GamesView() {
@@ -113,16 +113,15 @@ export function GamesView() {
 
   return (
     <>
-      <Backdrop tone="mono" />
-      <TopBar
-        left={<SearchBox value={q} onChange={setQ} placeholder="Search games..." />}
+            <TopBar
+        left={<SearchBox value={q} onChange={setQ} placeholder="Search games" />}
         right={
           <>
             <Select
               label="Platform"
               value={platform}
               onChange={(v) => setParam({ platform: v || null })}
-              options={[{ value: "", label: "All Platforms" }, ...(platforms.data ?? []).map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
+              options={[{ value: "", label: "All platforms" }, ...(platforms.data ?? []).map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
               className="w-[170px]"
             />
             <Select label="Sort" value={sort} onChange={(v) => setParam({ sort: v === "metascore" ? null : v })} options={SORTS} className="w-[190px]" />
@@ -130,7 +129,7 @@ export function GamesView() {
           </>
         }
       />
-      <div className="relative z-10 grid items-start gap-5 px-5 pb-5 md:px-6 lg:grid-cols-[296px_1fr]">
+      <div className="relative z-10 grid items-start gap-5 px-6 pb-6 lg:grid-cols-[296px_1fr]">
         <div className={clsx(mobileDetail && "hidden lg:block")}>
           <GameList
             items={items}
@@ -147,7 +146,7 @@ export function GamesView() {
         </div>
       </div>
       {detailData && (
-        <div className="relative z-10 grid items-start gap-5 px-5 pb-5 md:px-6 lg:grid-cols-[1fr_368px]">
+        <div className="relative z-10 grid items-start gap-5 px-6 pb-6 lg:grid-cols-[1fr_368px]">
           <SimilarGames items={detailData.similar} onSelect={select} />
           <YoutubeInsight insight={detailData.insight} />
         </div>
@@ -156,7 +155,7 @@ export function GamesView() {
         <ServiceMonitor />
       </div>
       {detailData && (
-        <div className="relative z-10 px-5 pb-6 md:px-6">
+        <div className="relative z-10 px-6 pb-6">
           <GameExtras data={detailData} />
         </div>
       )}
