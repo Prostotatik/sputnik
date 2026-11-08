@@ -162,8 +162,8 @@ export function WorkersView() {
       <div className="relative z-10 px-5 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="text-[clamp(34px,3.6vw,44px)] font-semibold tracking-[-0.03em]">Workers</h1>
-            <p className="mt-1 text-[15px] text-muted">Live view of agents, prompts and tool calls</p>
+            <h1 className="mt-3 text-[clamp(32px,3.3vw,40px)] leading-[1.1] font-semibold tracking-[-0.03em]">Workers</h1>
+            <p className="mt-1 text-[14px] text-muted">Live view of agents, prompts and tool calls</p>
           </div>
           <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 max-lg:basis-full lg:max-w-[700px] lg:flex-nowrap">
             <Kpi icon={<Cpu className="h-4 w-4 text-good" />} label="Active Workers" value={`${runningCount} / ${enabledCount}`}>
@@ -245,7 +245,7 @@ export function WorkersView() {
           </aside>
         </div>
 
-        <div className="mt-4 grid items-start gap-5 pb-8 lg:grid-cols-2">
+        <div className="mt-4 grid gap-5 pb-8 lg:grid-cols-[1.1fr_1fr]">
           <NodeDetails
             node={selected}
             exec={selectedExec}

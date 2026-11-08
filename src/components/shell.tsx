@@ -82,7 +82,7 @@ export function MobileNav() {
 
 export function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
-    <label className="pill flex h-11 w-full max-w-[330px] items-center gap-3 rounded-full px-4 text-sm text-muted focus-within:border-accent/60">
+    <label className="pill flex h-[38px] w-full max-w-[330px] items-center gap-3 rounded-full px-4 text-sm text-muted focus-within:border-accent/60">
       <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
       <input
         type="search"
@@ -101,7 +101,7 @@ export function StatusDot() {
   const online = connected && status?.worker.online;
   const label = !connected ? "Disconnected from server" : online ? `Worker online (${status?.worker.state})` : "Worker offline";
   return (
-    <span title={label} aria-label={label} role="status" className="ml-1 flex h-11 w-5 items-center justify-center">
+    <span title={label} aria-label={label} role="status" className="ml-1 flex h-[38px] w-5 items-center justify-center">
       <span className={clsx("h-2.5 w-2.5 rounded-full", online ? "live-dot bg-good" : "bg-bad")} />
     </span>
   );
@@ -130,7 +130,7 @@ export function RunNowButton({ size = "md", className }: { size?: "md" | "sm"; c
         title={active ? "A run is in progress" : "Start a collection run now"}
         className={clsx(
           "btn-primary flex items-center gap-2 font-medium",
-          size === "md" ? "h-11 px-5 text-[13px]" : "h-10 px-4 text-xs",
+          size === "md" ? "h-[38px] px-5 text-[13px]" : "h-10 px-4 text-xs",
         )}
       >
         {pending || active ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-3.5 w-3.5" strokeWidth={2.2} />}
@@ -153,7 +153,7 @@ export function RunNowButton({ size = "md", className }: { size?: "md" | "sm"; c
 
 export function TopBar({ left, right }: { left?: ReactNode; right?: ReactNode }) {
   return (
-    <header className="relative z-20 flex flex-wrap items-center gap-3 px-5 pt-5 pb-4 md:px-6">
+    <header className="relative z-20 flex flex-wrap items-center gap-3 px-5 pt-[21px] pb-4 md:px-6">
       <div className="min-w-0 flex-1">{left}</div>
       <div className="flex flex-wrap items-center gap-3">
         {right}

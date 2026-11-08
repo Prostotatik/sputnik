@@ -12,12 +12,12 @@ W, H = 1222, 1287  # reference canvas
 def prep(src, out, blur):
     # crop implementation/reference to the reference canvas, grayscale, heavy blur -> composition map
     subprocess.run(["ffmpeg","-y","-loglevel","error","-i",src,"-vf",
-        f"crop={W}:{H}:0:0,scale=305:322,format=gray,gblur=sigma={blur}", out], check=True)
+        f"pad=w=max(iw\\,{W}):h=max(ih\\,{H}):x=0:y=0:color=0x0b0b0d,crop={W}:{H}:0:0,scale=305:322,format=gray,gblur=sigma={blur}", out], check=True)
 def ssim(a, b):
     r = subprocess.run(["ffmpeg","-i",a,"-i",b,"-lavfi","ssim","-f","null","-"], capture_output=True, text=True).stderr
     return float(re.search(r"All:([0-9.]+)", r).group(1))
 def mean_rgb(src):
-    r = subprocess.run(["ffmpeg","-loglevel","error","-i",src,"-vf",f"crop={W}:{H}:0:0,scale=1:1","-f","rawvideo","-pix_fmt","rgb24","-"], capture_output=True).stdout
+    r = subprocess.run(["ffmpeg","-loglevel","error","-i",src,"-vf",f"pad=w=max(iw\\,{W}):h=max(ih\\,{H}):x=0:y=0:color=0x0b0b0d,crop={W}:{H}:0:0,scale=1:1","-f","rawvideo","-pix_fmt","rgb24","-"], capture_output=True).stdout
     return tuple(r[:3])
 tabs = ["games","workers","analytics"]
 for t in tabs:

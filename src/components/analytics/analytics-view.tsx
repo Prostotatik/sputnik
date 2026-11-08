@@ -86,7 +86,7 @@ export function AnalyticsView() {
               options={[{ value: "", label: "All Platforms" }, ...(platforms.data ?? []).map((p) => ({ value: p.name, label: p.name }))]}
               className="w-[160px]"
             />
-            <a href={`/api/analytics/export?${qs}`} download className="btn-primary flex h-11 items-center gap-2 px-5 text-[13px] font-medium">
+            <a href={`/api/analytics/export?${qs}`} download className="btn-primary flex h-[38px] items-center gap-2 px-5 text-[13px] font-medium">
               <Download className="h-4 w-4" /> Export Report
             </a>
           </>
@@ -293,7 +293,7 @@ export function AnalyticsView() {
               </section>
             </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[2.08fr_1fr]">
               <section className="card p-4">
                 <CardTitle right={<span className="pill px-3 py-1.5 text-[12px] text-muted">Player Interest</span>}>Top Games by Player Interest</CardTitle>
                 {data.topGames.length === 0 ? (

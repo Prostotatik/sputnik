@@ -82,7 +82,7 @@ export function Select({
   className?: string;
 }) {
   return (
-    <label className={clsx("pill relative flex h-11 items-center", className)}>
+    <label className={clsx("pill relative flex h-[38px] items-center", className)}>
       <span className="sr-only">{label}</span>
       <select
         value={value}
