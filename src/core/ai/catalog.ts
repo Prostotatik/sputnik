@@ -28,7 +28,6 @@ export const MODELS: ModelSpec[] = [
   { id: "gemini-3.1-flash-lite", provider: "google", label: "Gemini 3.1 Flash Lite", capabilities: ["text", "video"], rpm: 15, tpm: 250_000, rpd: 500, priceIn: 0.1, priceOut: 0.4, structured: true },
   { id: "gemma-4-31b-it", provider: "google", label: "Gemma 4 31B", capabilities: ["text"], rpm: 30, tpm: 16_000, rpd: 14_400, priceIn: 0, priceOut: 0, structured: false },
   { id: "gemma-4-26b-a4b-it", provider: "google", label: "Gemma 4 26B", capabilities: ["text"], rpm: 30, tpm: 16_000, rpd: 14_400, priceIn: 0, priceOut: 0, structured: false },
-  { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite", capabilities: ["text", "video"], rpm: 10, tpm: 250_000, rpd: 20, priceIn: 0.1, priceOut: 0.4, structured: true },
   { id: "gemini-3.8-flash", provider: "google", label: "Gemini 3.8 Flash", capabilities: ["text", "video"], rpm: 5, tpm: 250_000, rpd: 20, priceIn: 0.3, priceOut: 2.5, structured: true },
   { id: "gemini-3.6-flash", provider: "google", label: "Gemini 3.6 Flash", capabilities: ["text", "video"], rpm: 5, tpm: 250_000, rpd: 20, priceIn: 0.3, priceOut: 2.5, structured: true },
   { id: "gemini-3-flash-preview", provider: "google", label: "Gemini 3 Flash", capabilities: ["text", "video"], rpm: 5, tpm: 250_000, rpd: 20, priceIn: 0.3, priceOut: 2.5, structured: true },
