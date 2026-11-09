@@ -1,8 +1,7 @@
-import { googleApiKey, openAiApiKey } from "@/lib/env";
+import { cfAiGatewayToken, geminiBaseUrl, googleApiKey, openAiApiKey } from "@/lib/env";
 import type { ModelSpec } from "./catalog";
 import { AiCallError, redactSecrets, type CallResult } from "./router";
 
-const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const OPENAI_BASE = "https://api.openai.com/v1";
 const TIMEOUT_MS = 180_000;
 
@@ -66,6 +65,17 @@ function requireGoogleKey(): string {
   return key;
 }
 
+function geminiUrl(spec: ModelSpec, method: string): string {
+  return `${geminiBaseUrl()}/models/${spec.id}:${method}`;
+}
+
+function geminiHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "x-goog-api-key": requireGoogleKey() };
+  const token = cfAiGatewayToken();
+  if (token) headers["cf-aig-authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
 async function geminiGenerate(spec: ModelSpec, input: GenerateInput): Promise<CallResult<string>> {
   const parts: Record<string, unknown>[] = [];
   if (input.video) {
@@ -91,7 +101,7 @@ async function geminiGenerate(spec: ModelSpec, input: GenerateInput): Promise<Ca
   const body: Record<string, unknown> = { contents: [{ role: "user", parts }], generationConfig };
   if (spec.structured && input.system) body.systemInstruction = { parts: [{ text: input.system }] };
 
-  const data = (await postJson(`${GEMINI_BASE}/models/${spec.id}:generateContent`, { "x-goog-api-key": requireGoogleKey() }, body)) as GeminiResponse;
+  const data = (await postJson(geminiUrl(spec, "generateContent"), geminiHeaders(), body)) as GeminiResponse;
   if (data.promptFeedback?.blockReason) throw new AiCallError(`Blocked: ${data.promptFeedback.blockReason}`, "invalid");
   const text = (data.candidates?.[0]?.content?.parts ?? [])
     .filter((p) => !p.thought)
@@ -108,8 +118,8 @@ async function geminiGenerate(spec: ModelSpec, input: GenerateInput): Promise<Ca
 
 async function geminiEmbed(spec: ModelSpec, text: string): Promise<CallResult<number[]>> {
   const data = (await postJson(
-    `${GEMINI_BASE}/models/${spec.id}:embedContent`,
-    { "x-goog-api-key": requireGoogleKey() },
+    geminiUrl(spec, "embedContent"),
+    geminiHeaders(),
     { content: { parts: [{ text }] }, outputDimensionality: 768 },
   )) as { embedding?: { values?: number[] } };
   const values = data.embedding?.values;

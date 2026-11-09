@@ -27,7 +27,11 @@ Create `.env` in the project root:
 ```dotenv
 GOOGLE-AI-KEY=...        # Google AI Studio key (required)
 OPENAI_API_KEY=...       # optional fallback for text and embeddings
+GEMINI_BASE_URL=...      # optional, e.g. https://gateway.ai.cloudflare.com/v1/<account>/<gateway>/google-ai-studio/v1beta
+CF_AIG_TOKEN=...         # optional, token for an authenticated Cloudflare AI Gateway
 ```
+
+If Google answers `User location is not supported for the API use`, the server's IP is in a region the Gemini API does not serve. Route the calls through [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/) by setting `GEMINI_BASE_URL` (and `CF_AIG_TOKEN` when the gateway requires authentication).
 
 The keys are only read on the server. They are sent in request headers and redacted from logs, so they never reach the browser.
 
