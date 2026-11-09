@@ -44,7 +44,17 @@ interface NodeTally {
 }
 
 /** Executes one collection run following the current pipeline rules. */
-export async function executeRun(deps: RunDeps, trigger: "schedule" | "manual", requestId: number | null = null): Promise<number> {
+export interface RunOptions {
+  /** Process exactly these games (e.g. a backfill) instead of selecting new ones; the daily selection state is left untouched. */
+  candidates?: Candidate[];
+}
+
+export async function executeRun(
+  deps: RunDeps,
+  trigger: "schedule" | "manual",
+  requestId: number | null = null,
+  opts: RunOptions = {},
+): Promise<number> {
   const { db, mc, ai } = deps;
   const now = deps.now ?? Date.now;
   const nodes = listNodes(db);
@@ -75,13 +85,16 @@ export async function executeRun(deps: RunDeps, trigger: "schedule" | "manual", 
     run.nodeStart(fetchNode.id);
     run.update({ currentStep: "Fetching new games" });
     const state = loadDailyState(db, today);
-    const selection = await selectCandidates(state, mc, {
-      quota: sync.params.gamesPerRun,
-      newReleasesLimit: fetchNode.params.newReleasesLimit,
-      pageSize: fetchNode.params.browsePageSize,
-      maxPages: fetchNode.params.maxBrowsePages,
-    });
-    saveDailyState(db, selection.state);
+    const explicit = opts.candidates;
+    const selection = explicit
+      ? { candidates: explicit, state, pagesVisited: [] as number[] }
+      : await selectCandidates(state, mc, {
+          quota: sync.params.gamesPerRun,
+          newReleasesLimit: fetchNode.params.newReleasesLimit,
+          pageSize: fetchNode.params.browsePageSize,
+          maxPages: fetchNode.params.maxBrowsePages,
+        });
+    if (!explicit) saveDailyState(db, selection.state);
     const candidates = selection.candidates;
     run.nodeData(fetchNode.id, {
       input: { day: today, phase: state.phase, cursorPage: state.page, alreadyProcessedToday: state.processed.length },
@@ -100,7 +113,8 @@ export async function executeRun(deps: RunDeps, trigger: "schedule" | "manual", 
         run.nodeData(n.id, { total: candidates.length });
       }
     }
-    run.event("info", `Processing ${candidates.length} new games`, fetchNode.id, `Pages: ${selection.pagesVisited.join(", ") || "New Releases"}`);
+    if (explicit) run.event("info", `Reprocessing ${candidates.length} games from the library`, fetchNode.id);
+    else run.event("info", `Processing ${candidates.length} new games`, fetchNode.id, `Pages: ${selection.pagesVisited.join(", ") || "New Releases"}`);
 
     // 2. Process each game.
     const touched: number[] = [];
@@ -120,7 +134,7 @@ export async function executeRun(deps: RunDeps, trigger: "schedule" | "manual", 
         errors++;
         run.event("error", `Failed to process ${cand.title}: ${(err as Error).message}`);
       } finally {
-        markProcessed(db, today, cand.slug);
+        if (!explicit) markProcessed(db, today, cand.slug);
         run.update({ processed: i + 1, added, updated, errors });
       }
     }

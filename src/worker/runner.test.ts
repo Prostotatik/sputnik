@@ -60,6 +60,22 @@ const youtubeSearch = async () => [
 ];
 
 describe("executeRun", () => {
+  it("reprocesses explicit candidates without touching the daily selection", async () => {
+    const db = openDb(":memory:");
+    listNodes(db);
+    const ai = fakeAi();
+    const mc = fakeMc(["n1", "n2"]);
+    const candidates = [{ ...item("old1"), source: "browse" as const }, { ...item("old2"), source: "browse" as const }];
+    await executeRun({ db, mc, ai, youtubeSearch }, "manual", null, { candidates });
+    const run = db.select().from(runs).get()!;
+    expect(run).toMatchObject({ status: "success", total: 2, processed: 2, added: 2, errors: 0 });
+    expect(db.select().from(games).all().map((g) => g.slug).sort()).toEqual(["old1", "old2"]);
+    const today = dayKey(new Date(), "Europe/Moscow");
+    const state = loadDailyState(db, today);
+    expect(state.phase).toBe("new-releases");
+    expect(state.processed).toEqual([]);
+  });
+
   it("processes New Releases end-to-end and isolates per-game failures", async () => {
     const db = openDb(":memory:");
     listNodes(db);
