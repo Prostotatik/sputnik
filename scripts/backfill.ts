@@ -104,14 +104,15 @@ async function reprocess(): Promise<void> {
   console.log(`Run #${id} finished`);
 }
 
-if (activeRun(db)) {
-  console.error("A run is in progress; try again when it finishes.");
-  process.exit(1);
+async function main(): Promise<void> {
+  if (activeRun(db)) throw new Error("A run is in progress; try again when it finishes.");
+  if (mode === "dump-reviews" && args[0]) await dumpReviews(args[0]);
+  else if (mode === "save-summaries" && args[0] && args[1]) saveSummaries(args[0], args[1]);
+  else if (mode === "reprocess") await reprocess();
+  else throw new Error("Usage: backfill.ts dump-reviews <out.json> | save-summaries <in.json> <model> | reprocess");
 }
-if (mode === "dump-reviews" && args[0]) await dumpReviews(args[0]);
-else if (mode === "save-summaries" && args[0] && args[1]) saveSummaries(args[0], args[1]);
-else if (mode === "reprocess") await reprocess();
-else {
-  console.error("Usage: backfill.ts dump-reviews <out.json> | save-summaries <in.json> <model> | reprocess");
+
+main().catch((err: Error) => {
+  console.error(err.message);
   process.exit(1);
-}
+});
