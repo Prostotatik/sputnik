@@ -1,6 +1,7 @@
 import { db, json, readJson } from "@/lib/api";
+import { modelSpec } from "@/core/ai/catalog";
 import { AiService } from "@/core/ai/service";
-import { previewCustomField } from "@/core/enrich/custom";
+import { previewCustomField, RULE_TEST_DAILY_LIMIT, ruleTestsToday } from "@/core/enrich/custom";
 import { validatePrompt } from "@/core/pipeline/types";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +11,13 @@ export async function POST(req: Request) {
   const body = await readJson(req);
   const slug = typeof body.slug === "string" ? body.slug : "";
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
-  const preferredModel = typeof body.preferredModel === "string" && body.preferredModel ? body.preferredModel : undefined;
+  // Only catalog text models; anything else falls back to the rotation.
+  const preferredModel = typeof body.preferredModel === "string" && modelSpec(body.preferredModel)?.capabilities.includes("text") ? body.preferredModel : undefined;
   const errors = [...(slug ? [] : ["slug: pick a game to test on"]), ...validatePrompt("custom_prompt", prompt)];
   if (errors.length) return json({ errors }, { status: 400 });
+  if (ruleTestsToday(db()) >= RULE_TEST_DAILY_LIMIT) {
+    return json({ errors: [`Rule tests are limited to ${RULE_TEST_DAILY_LIMIT} AI calls a day. Save the rule and let the next run fill it in.`] }, { status: 429 });
+  }
   try {
     const res = await previewCustomField(db(), new AiService(db()), { slug, prompt, preferredModel });
     return res ? json(res) : json({ errors: ["Game not found"] }, { status: 404 });

@@ -80,6 +80,17 @@ describe("API", () => {
     expect((await res.json()).errors).toHaveLength(2);
   });
 
+  it("caps custom rule tests per day, since the site has no login", async () => {
+    const { aiCalls } = await import("@/lib/db/schema");
+    const { RULE_TEST_DAILY_LIMIT } = await import("@/core/enrich/custom");
+    const db = getDb();
+    const rows = Array.from({ length: RULE_TEST_DAILY_LIMIT }, () => ({ ts: Date.now(), provider: "google" as const, model: "m", capability: "text" as const, purpose: "custom:test", status: "ok" as const }));
+    db.insert(aiCalls).values(rows).run();
+    const res = await pipelineTest.POST(new Request("http://x", { method: "POST", body: JSON.stringify({ slug: "hades", prompt: "Describe {{title}} in one line please" }) }));
+    expect(res.status).toBe(429);
+    db.delete(aiCalls).run();
+  });
+
   it("rejects invalid pipeline params with 400", async () => {
     const res = await pipeline.PATCH(
       new Request("http://x", { method: "PATCH", body: JSON.stringify({ params: { gamesPerRun: 0 } }) }),

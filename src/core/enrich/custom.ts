@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "@/lib/db/client";
-import { analyticsInsights, gameCustomFields, gamePlatforms, games } from "@/lib/db/schema";
+import { aiCalls, analyticsInsights, gameCustomFields, gamePlatforms, games } from "@/lib/db/schema";
 import type { AiContext, AiService } from "../ai/service";
 import { metricsForPrompt, type AnalyticsData } from "../analytics";
 import { renderPrompt } from "../pipeline/defaults";
@@ -53,6 +53,22 @@ export function gameContext(db: Db, gameId: number): GameContext {
   };
 }
 
+/** The site has no login, so rule tests share a small daily budget instead of drawing on the whole AI quota. */
+export const RULE_TEST_DAILY_LIMIT = 30;
+export const RULE_TEST_PURPOSE = "custom:test";
+
+/** AI calls made by rule tests since UTC midnight (a test that falls through the rotation counts each model tried). */
+export function ruleTestsToday(db: Db, now = Date.now()): number {
+  const since = Date.parse(`${new Date(now).toISOString().slice(0, 10)}T00:00:00Z`);
+  return (
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(aiCalls)
+      .where(and(eq(aiCalls.purpose, RULE_TEST_PURPOSE), gte(aiCalls.ts, since)))
+      .get()?.n ?? 0
+  );
+}
+
 /** Runs a custom rule's prompt against one library game without storing the answer (the "Test" button). */
 export async function previewCustomField(
   db: Db,
@@ -62,7 +78,7 @@ export async function previewCustomField(
   const row = db.select({ id: games.id, title: games.title }).from(games).where(eq(games.slug, input.slug)).get();
   if (!row) return null;
   const prompt = renderPrompt(input.prompt, gamePromptVars(gameContext(db, row.id)));
-  const res = await ai.text({ purpose: "custom:test", gameId: row.id, preferredModel: input.preferredModel }, prompt);
+  const res = await ai.text({ purpose: RULE_TEST_PURPOSE, gameId: row.id, preferredModel: input.preferredModel }, prompt);
   return { value: res.value.trim().slice(0, 2000), model: res.model, prompt, game: row.title };
 }
 
