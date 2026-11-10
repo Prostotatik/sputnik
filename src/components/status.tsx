@@ -15,7 +15,15 @@ const StatusContext = createContext<StatusContextValue>({
   runNow: async () => ({ ok: false, message: "Not ready" }),
 });
 
-/** One shared EventSource for the realtime service status. */
+/** Poll /api/status when the stream has delivered nothing fresh for this long. */
+const STREAM_STALE_MS = 4_000;
+const WATCHDOG_MS = 2_000;
+
+/**
+ * Realtime service status. The SSE stream is the fast path; a compressing reverse proxy can
+ * buffer it, so a watchdog polls the JSON snapshot whenever the stream goes quiet.
+ * Snapshots older than the one on screen are ignored, so late buffered frames never roll the UI back.
+ */
 export function StatusProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<StatusSnapshot | null>(null);
   const [connected, setConnected] = useState(false);
@@ -23,25 +31,57 @@ export function StatusProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let es: EventSource | null = null;
     let retry: ReturnType<typeof setTimeout> | undefined;
+    let latest = 0;
+    let lastStreamFrame = 0;
+    let polling = false;
+    let disposed = false;
+
+    const accept = (s: StatusSnapshot): boolean => {
+      if (disposed || s.now <= latest) return false;
+      latest = s.now;
+      setStatus(s);
+      setConnected(true);
+      return true;
+    };
+
+    const poll = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        const res = await fetch("/api/status", { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        accept((await res.json()) as StatusSnapshot);
+      } catch {
+        if (!disposed && Date.now() - lastStreamFrame > STREAM_STALE_MS) setConnected(false);
+      } finally {
+        polling = false;
+      }
+    };
+
     const open = () => {
       es = new EventSource("/api/stream");
-      es.onopen = () => setConnected(true);
       es.onmessage = (e) => {
         try {
-          setStatus(JSON.parse(e.data) as StatusSnapshot);
+          if (accept(JSON.parse(e.data) as StatusSnapshot)) lastStreamFrame = Date.now();
         } catch {
           // ignore malformed frame
         }
       };
       es.onerror = () => {
-        setConnected(false);
         es?.close();
         retry = setTimeout(open, 3000);
       };
     };
+
+    void poll();
     open();
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastStreamFrame > STREAM_STALE_MS) void poll();
+    }, WATCHDOG_MS);
     return () => {
+      disposed = true;
       clearTimeout(retry);
+      clearInterval(watchdog);
       es?.close();
     };
   }, []);

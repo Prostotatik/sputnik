@@ -12,7 +12,7 @@ const log = (m) => console.log(`[ui-smoke] ${m}`);
 try {
 await page.goto(`${base}/workers`);
 await page.getByText("Summarize Critics").first().click();
-await page.getByRole("tab", { name: "Settings" }).click();
+await page.getByRole("tab", { name: "Rules" }).click();
 const field = page.getByLabel("Reviews sampled per summary");
 await field.fill("10");
 await page.getByRole("button", { name: "Save rules" }).click();

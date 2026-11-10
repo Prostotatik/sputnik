@@ -13,6 +13,9 @@ const runs = await import("./runs/route");
 const gamesRoute = await import("./games/route");
 const pipeline = await import("./pipeline/[id]/route");
 const exportRoute = await import("./analytics/export/route");
+const statusRoute = await import("./status/route");
+const pipelineTest = await import("./pipeline/test/route");
+const { eq } = await import("drizzle-orm");
 
 beforeAll(() => {
   const db = getDb();
@@ -46,6 +49,35 @@ describe("API", () => {
     expect(search.total).toBe(1);
     const pc = await (await gamesRoute.GET(new Request("http://x/api/games?platform=PC"))).json();
     expect(pc.items.map((g: { slug: string }) => g.slug)).toEqual(["hades", "tbd"]);
+  });
+
+  it("sorts by newest release by default, breaking same-day ties by discovery time", async () => {
+    const db = getDb();
+    const add = (slug: string, releaseDate: string | null, firstSeenAt: number) =>
+      db.insert(games).values({ slug, title: slug, releaseDate, metacriticUrl: "u", source: "browse", firstSeenAt, updatedAt: 1 }).run();
+    add("new-late", "2099-01-02", 10);
+    add("new-early", "2099-01-02", 5);
+    add("older", "2099-01-01", 20);
+    add("undated", null, 30);
+    const res = await (await gamesRoute.GET(new Request("http://x/api/games?limit=100"))).json();
+    const slugs: string[] = res.items.map((g: { slug: string }) => g.slug);
+    expect(slugs.slice(0, 3)).toEqual(["new-late", "new-early", "older"]);
+    expect(slugs.at(-1)).toBe("undated");
+    for (const slug of ["new-late", "new-early", "older", "undated"]) db.delete(games).where(eq(games.slug, slug)).run();
+  });
+
+  it("serves the status snapshot as JSON for the polling fallback", async () => {
+    const res = statusRoute.GET();
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+    const body = await res.json();
+    expect(body).toMatchObject({ worker: { online: false, intervalMinutes: 60 }, totals: { games: 3 } });
+    expect(typeof body.now).toBe("number");
+  });
+
+  it("rejects a custom rule test without a game or with a short prompt", async () => {
+    const res = await pipelineTest.POST(new Request("http://x", { method: "POST", body: JSON.stringify({ prompt: "short" }) }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).errors).toHaveLength(2);
   });
 
   it("rejects invalid pipeline params with 400", async () => {

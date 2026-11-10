@@ -130,7 +130,11 @@ export interface CustomNodeInput {
   prompt?: string;
   parentId?: string;
   requireReviews?: boolean;
+  preferredModel?: string;
 }
+
+/** Custom rules run last for each game (they can use the summaries and the let's-play verdict), so they hang off the last per-game step. */
+const CUSTOM_PARENT_ORDER = ["letsplay", "users", "reviews", "sync"];
 
 export function addCustomNode(db: Db, input: CustomNodeInput): ValidationResult<PipelineNode> {
   const nodes = listNodes(db);
@@ -138,6 +142,7 @@ export function addCustomNode(db: Db, input: CustomNodeInput): ValidationResult<
     label: input.label,
     fieldKey: input.fieldKey,
     requireReviews: input.requireReviews ?? false,
+    preferredModel: input.preferredModel ?? "",
   });
   const prompt = input.prompt ?? `${DEFAULT_CUSTOM_PROMPT}${input.label}?`;
   const errors = [...(params.ok ? [] : params.errors), ...validatePrompt("custom_prompt", prompt)];
@@ -145,7 +150,10 @@ export function addCustomNode(db: Db, input: CustomNodeInput): ValidationResult<
   if (nodes.some((n) => n.type === "custom_prompt" && (n.params as NodeParams<"custom_prompt">).fieldKey === params.value.fieldKey)) {
     return { ok: false, errors: [`params.fieldKey: "${params.value.fieldKey}" is already used`] };
   }
-  const parentId = input.parentId && nodes.some((n) => n.id === input.parentId) ? input.parentId : "sync";
+  const parentId =
+    input.parentId && nodes.some((n) => n.id === input.parentId)
+      ? input.parentId
+      : (CUSTOM_PARENT_ORDER.find((id) => nodes.some((n) => n.id === id)) ?? "sync");
   const id = `custom_${params.value.fieldKey}`;
   db.insert(pipelineNodes)
     .values({

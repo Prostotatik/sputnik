@@ -18,6 +18,25 @@ export function timeUntil(ts: number | null | undefined, now = Date.now()): stri
   return `in ${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
+/** "every hour", "every 30 min", "every 2h 30m". */
+export function every(minutes: number | null | undefined): string {
+  if (!minutes) return "";
+  if (minutes === 60) return "every hour";
+  if (minutes < 60) return `every ${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `every ${h}h${m ? ` ${m}m` : ""}`;
+}
+
+/** Release date as "Nov 10" (this year) or "Nov 10, 2024". Dates are stored as YYYY-MM-DD. */
+export function shortDate(iso: string | null | undefined, now = Date.now()): string {
+  if (!iso) return "TBA";
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "TBA";
+  const sameYear = d.getUTCFullYear() === new Date(now).getUTCFullYear();
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: sameYear ? undefined : "numeric", timeZone: "UTC" });
+}
+
 export function duration(ms: number | null | undefined): string {
   if (ms === null || ms === undefined || ms < 0) return "—";
   const s = Math.round(ms / 1000);

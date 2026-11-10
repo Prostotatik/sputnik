@@ -1,9 +1,7 @@
 import { db, intParam, json } from "@/lib/api";
-import { listGames, type GameSort } from "@/core/queries";
+import { DEFAULT_GAME_SORT, GAME_SORTS, listGames, type GameSort } from "@/core/queries";
 
 export const dynamic = "force-dynamic";
-
-const SORTS: GameSort[] = ["metascore", "userscore", "release", "updated"];
 
 export function GET(req: Request) {
   const url = new URL(req.url);
@@ -12,7 +10,7 @@ export function GET(req: Request) {
     listGames(db(), {
       q: url.searchParams.get("q") ?? undefined,
       platform: url.searchParams.get("platform") || undefined,
-      sort: sort && SORTS.includes(sort) ? sort : "metascore",
+      sort: sort && GAME_SORTS.includes(sort) ? sort : DEFAULT_GAME_SORT,
       offset: intParam(url.searchParams.get("offset"), 0, 0, 1_000_000),
       limit: intParam(url.searchParams.get("limit"), 20, 1, 100),
     }),

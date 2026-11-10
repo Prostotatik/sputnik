@@ -1,9 +1,12 @@
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "@/lib/db/client";
-import { analyticsInsights, gameCustomFields } from "@/lib/db/schema";
+import { analyticsInsights, gameCustomFields, gamePlatforms, games } from "@/lib/db/schema";
 import type { AiContext, AiService } from "../ai/service";
 import { metricsForPrompt, type AnalyticsData } from "../analytics";
 import { renderPrompt } from "../pipeline/defaults";
+import { getSummary } from "./summaries";
+import { getInsight } from "./youtube";
 
 export interface GameContext {
   title: string;
@@ -31,6 +34,36 @@ export function gamePromptVars(g: GameContext): Record<string, string> {
     userVerdict: g.userVerdict ?? "n/a",
     letsplay: g.letsplayConclusion ?? "n/a",
   };
+}
+
+export function gameContext(db: Db, gameId: number): GameContext {
+  const g = db.select().from(games).where(eq(games.id, gameId)).get()!;
+  const platforms = db.select({ name: gamePlatforms.name }).from(gamePlatforms).where(eq(gamePlatforms.gameId, gameId)).all();
+  return {
+    title: g.title,
+    genres: g.genres,
+    platforms: platforms.map((p) => p.name),
+    developer: g.developer,
+    description: g.description,
+    metascore: g.metascore,
+    userscore: g.userscore,
+    criticVerdict: getSummary(db, gameId, "critic")?.verdict ?? null,
+    userVerdict: getSummary(db, gameId, "user")?.verdict ?? null,
+    letsplayConclusion: getInsight(db, gameId)?.conclusion ?? null,
+  };
+}
+
+/** Runs a custom rule's prompt against one library game without storing the answer (the "Test" button). */
+export async function previewCustomField(
+  db: Db,
+  ai: AiService,
+  input: { slug: string; prompt: string; preferredModel?: string },
+): Promise<{ value: string; model: string; prompt: string; game: string } | null> {
+  const row = db.select({ id: games.id, title: games.title }).from(games).where(eq(games.slug, input.slug)).get();
+  if (!row) return null;
+  const prompt = renderPrompt(input.prompt, gamePromptVars(gameContext(db, row.id)));
+  const res = await ai.text({ purpose: "custom:test", gameId: row.id, preferredModel: input.preferredModel }, prompt);
+  return { value: res.value.trim().slice(0, 2000), model: res.model, prompt, game: row.title };
 }
 
 /** Runs a user-defined prompt node for one game and stores the answer as a custom field. */

@@ -48,8 +48,10 @@ describe("pipeline rules", () => {
 
   it("adds, rejects duplicate and deletes custom prompt nodes; reset removes them", () => {
     listNodes(db);
-    const added = addCustomNode(db, { label: "Monetization", fieldKey: "monetization" });
+    const added = addCustomNode(db, { label: "Monetization", fieldKey: "monetization", preferredModel: "gemma-4-31b-it" });
     expect(added.ok).toBe(true);
+    // Custom rules run last for each game, so the graph draws them after the let's-play verdict.
+    expect(added.ok && added.value).toMatchObject({ parentId: "letsplay", params: { preferredModel: "gemma-4-31b-it" } });
     expect(addCustomNode(db, { label: "Again", fieldKey: "monetization" }).ok).toBe(false);
     expect(addCustomNode(db, { label: "Bad", fieldKey: "Bad Key" }).ok).toBe(false);
     addCustomNode(db, { label: "Audience", fieldKey: "audience" });

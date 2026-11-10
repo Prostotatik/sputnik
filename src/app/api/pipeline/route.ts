@@ -23,6 +23,7 @@ export async function POST(req: Request) {
       prompt: typeof body.prompt === "string" ? body.prompt : undefined,
       parentId: typeof body.parentId === "string" ? body.parentId : undefined,
       requireReviews: body.requireReviews === true,
+      preferredModel: typeof body.preferredModel === "string" ? body.preferredModel : undefined,
     });
     return res.ok ? json(res.value, { status: 201 }) : json({ errors: res.errors }, { status: 400 });
   }

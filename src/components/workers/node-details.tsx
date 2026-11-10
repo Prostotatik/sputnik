@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Bot, CalendarDays, Clock3, RotateCcw, Save, Trash2 } from "lucide-react";
+import { Bot, CalendarDays, Clock3, Pencil, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { PipelineNode } from "@/core/pipeline/types";
 import { PROMPT_NODE_TYPES } from "@/core/pipeline/types";
@@ -9,58 +9,34 @@ import type { NodeLog, RunNode } from "@/lib/db/schema";
 import { clock, duration } from "@/lib/client/format";
 import { EmptyState } from "../shell";
 import { NODE_META, STATUS_META, YoutubeGlyph } from "./node-meta";
+import { Field, inputCls, ModelSelect, PARAM_INFO, PromptEditor, TestOnGame, Toggle, type ModelOption } from "./rule-editor";
 
-const TABS = ["Overview", "Input", "Output", "Logs", "Settings"] as const;
-type Tab = (typeof TABS)[number];
-
-const PARAM_LABELS: Record<string, string> = {
-  intervalMinutes: "Run every (minutes)",
-  gamesPerRun: "Games per run",
-  timezone: "Day boundary time zone",
-  requestDelayMs: "Delay between Metacritic requests (ms)",
-  newReleasesLimit: "Games taken from New Releases",
-  browsePageSize: "See All page size",
-  maxBrowsePages: "Max See All pages per run",
-  userScoresPerPlatform: "Fetch Userscore per platform",
-  maxReviews: "Reviews sampled per summary",
-  preferredModel: "Preferred model (blank = rotation)",
-  topK: "Similar games per game",
-  useEmbeddings: "Use semantic embeddings",
-  queryTemplate: "YouTube search query",
-  minDurationMinutes: "Minimum video length (minutes)",
-  excludePattern: "Exclude titles matching (regex)",
-  maxCandidates: "Videos to try per game",
-  requireReviews: "Only games that have reviews",
-  startOffsetSec: "Transcribe from second",
-  clipSeconds: "Clip length (seconds)",
-  dailyBudgetMinutes: "Daily video budget (minutes)",
-  minTranscriptChars: "Minimum narration length (chars)",
-  fieldKey: "Field key",
-  label: "Field label",
-};
-
-const PLACEHOLDERS: Record<string, string> = {
-  critic_summary: "{{title}} {{genres}} {{developer}} {{reviews}}",
-  user_summary: "{{title}} {{genres}} {{developer}} {{reviews}}",
-  letsplay_summary: "{{title}} {{channel}} {{videoTitle}} {{transcript}}",
-  insights: "{{metrics}}",
-  custom_prompt: "{{title}} {{genres}} {{platforms}} {{developer}} {{description}} {{metascore}} {{userscore}} {{criticVerdict}} {{userVerdict}} {{letsplay}}",
-  transcribe: "(video segment is attached automatically)",
-};
+export const TABS = ["Overview", "Rules", "Input", "Output", "Logs"] as const;
+export type Tab = (typeof TABS)[number];
 
 function JsonBlock({ value }: { value: unknown }) {
   if (value === null || value === undefined) return <EmptyState title="Nothing recorded for this run" />;
   return <pre className="max-h-[260px] overflow-auto rounded-lg bg-deep p-3 text-xs leading-relaxed text-muted">{JSON.stringify(value, null, 2)}</pre>;
 }
 
-function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: () => void; onDeleted: () => void }) {
-  const [enabled, setEnabled] = useState(node.enabled);
-  const [prompt, setPrompt] = useState(node.prompt ?? "");
-  const [params, setParams] = useState<Record<string, unknown>>(node.params as Record<string, unknown>);
+function paramText(value: unknown): string {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value === "" || value === null || value === undefined) return "Automatic";
+  return String(value);
+}
+
+function RulesForm({ node, models, onSaved, onDeleted }: { node: PipelineNode; models: ModelOption[]; onSaved: () => void; onDeleted: () => void }) {
+  // The stored rules; "dirty" compares against them, so it clears once a save is refetched.
+  const initial = { enabled: node.enabled, prompt: node.prompt ?? "", params: node.params as Record<string, unknown> };
+  const [enabled, setEnabled] = useState(initial.enabled);
+  const [prompt, setPrompt] = useState(initial.prompt);
+  const [params, setParams] = useState<Record<string, unknown>>(initial.params);
   const [errors, setErrors] = useState<string[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const hasPrompt = PROMPT_NODE_TYPES.includes(node.type);
+  const dirty = enabled !== initial.enabled || prompt !== initial.prompt || JSON.stringify(params) !== JSON.stringify(initial.params);
+  const setParam = (key: string, value: unknown) => setParams((p) => ({ ...p, [key]: value }));
 
   const call = async (method: string, url: string, body?: unknown) => {
     setBusy(true);
@@ -80,7 +56,7 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
   };
 
   const save = async () => {
-    const data = await call("PATCH", `/api/pipeline/${node.id}`, { enabled, prompt: hasPrompt ? prompt : undefined, params });
+    const data = await call("PATCH", `/api/pipeline/${node.id}`, { enabled, prompt: hasPrompt ? prompt : undefined, params, name: node.type === "custom_prompt" ? String(params.label ?? node.name) : undefined });
     if (data) {
       setSaved("Saved. The next run uses these rules.");
       onSaved();
@@ -92,15 +68,16 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
       setEnabled(data.enabled);
       setPrompt(data.prompt ?? "");
       setParams(data.params);
-      setSaved("Restored default rules.");
+      setSaved("Restored the default rules.");
       onSaved();
     }
   };
   const remove = async () => {
-    if (!window.confirm(`Delete the custom rule "${node.name}"? Stored values stay hidden from game cards.`)) return;
+    if (!window.confirm(`Delete the custom rule "${node.name}"? Its answers stop showing on game cards.`)) return;
     if (await call("DELETE", `/api/pipeline/${node.id}`)) onDeleted();
   };
 
+  const entries = Object.entries(params).filter(([key]) => key !== "preferredModel");
   return (
     <form
       className="space-y-4"
@@ -109,41 +86,38 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
         void save();
       }}
     >
-      {node.type !== "sync" && (
-        <label className="flex items-center justify-between gap-3 text-[13px]">
-          <span>Run this step</span>
-          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4 accent-[var(--color-accent)]" />
-        </label>
+      {node.type !== "sync" && <Toggle label="Run this step" help="Disabled steps are skipped on the next run; their stored data stays." checked={enabled} onChange={setEnabled} />}
+      {entries.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {entries.map(([key, value]) => {
+            const info = PARAM_INFO[key] ?? { label: key, help: "" };
+            if (typeof value === "boolean") {
+              return (
+                <div key={key} className="sm:col-span-2">
+                  <Toggle label={info.label} help={info.help} checked={value} onChange={(v) => setParam(key, v)} />
+                </div>
+              );
+            }
+            return (
+              <Field key={key} label={info.label} help={info.help} className={clsx(typeof value === "string" && String(value).length > 24 && "sm:col-span-2")}>
+                <input
+                  type={typeof value === "number" ? "number" : "text"}
+                  value={String(value ?? "")}
+                  onChange={(e) => setParam(key, typeof value === "number" ? Number(e.target.value) : e.target.value)}
+                  className={clsx(inputCls, ["queryTemplate", "excludePattern", "fieldKey", "timezone"].includes(key) && "font-mono text-xs")}
+                />
+              </Field>
+            );
+          })}
+        </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Object.entries(params).map(([key, value]) => (
-          <label key={key} className="flex flex-col gap-1.5 text-xs text-muted">
-            {PARAM_LABELS[key] ?? key}
-            {typeof value === "boolean" ? (
-              <input type="checkbox" checked={value} onChange={(e) => setParams((p) => ({ ...p, [key]: e.target.checked }))} className="h-4 w-4 accent-[var(--color-accent)]" />
-            ) : (
-              <input
-                type={typeof value === "number" ? "number" : "text"}
-                value={String(value ?? "")}
-                onChange={(e) => setParams((p) => ({ ...p, [key]: typeof value === "number" ? Number(e.target.value) : e.target.value }))}
-                className="h-9 rounded-lg border border-line-2 bg-panel-2 px-3 text-[13px] text-fg focus:border-line-2 focus:outline-none"
-              />
-            )}
-          </label>
-        ))}
-      </div>
-      {hasPrompt && (
-        <label className="flex flex-col gap-1.5 text-xs text-muted">
-          Prompt
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={8}
-            className="rounded-lg border border-line-2 bg-panel-2 p-3 font-[inherit] text-[13px] leading-relaxed text-fg focus:border-line-2 focus:outline-none"
-          />
-          <span className="text-[11px] text-dim">Placeholders: {PLACEHOLDERS[node.type]}</span>
-        </label>
+      {"preferredModel" in params && (
+        <Field label={PARAM_INFO.preferredModel.label} help={PARAM_INFO.preferredModel.help}>
+          <ModelSelect value={String(params.preferredModel ?? "")} onChange={(v) => setParam("preferredModel", v)} models={models} capability={node.type === "transcribe" ? "video" : "text"} />
+        </Field>
       )}
+      {hasPrompt && <PromptEditor value={prompt} onChange={setPrompt} type={node.type} />}
+      {node.type === "custom_prompt" && <TestOnGame prompt={prompt} preferredModel={String(params.preferredModel ?? "")} />}
       {errors.length > 0 && (
         <ul role="alert" className="rounded-lg border border-bad/40 bg-bad/10 p-3 text-xs text-bad">
           {errors.map((e) => (
@@ -151,9 +125,8 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
           ))}
         </ul>
       )}
-      {saved && <p role="status" className="text-xs text-good">{saved}</p>}
-      <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={busy} className="btn-primary flex h-9 items-center gap-2 px-4 text-[13px]">
+      <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap items-center gap-2 rounded-b-[var(--radius-card)] border-t border-line bg-panel px-5 py-3">
+        <button type="submit" disabled={busy || !dirty} className="btn-primary flex h-9 items-center gap-2 px-4 text-[13px]">
           <Save className="h-4 w-4" strokeWidth={1.5} /> Save rules
         </button>
         {!node.isCustom && (
@@ -166,8 +139,38 @@ function Settings({ node, onSaved, onDeleted }: { node: PipelineNode; onSaved: (
             <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Delete rule
           </button>
         )}
+        <span role="status" className={clsx("ml-auto text-xs", saved ? "text-good" : "text-dim")}>
+          {saved ?? (dirty ? "Unsaved changes" : "")}
+        </span>
       </div>
     </form>
+  );
+}
+
+function RulesSummary({ node, onEdit }: { node: PipelineNode; onEdit: () => void }) {
+  const entries = Object.entries(node.params as Record<string, unknown>);
+  return (
+    <div className="mt-4 rounded-lg border border-line p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted">Current rules</p>
+        <button type="button" onClick={onEdit} className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-2">
+          <Pencil className="h-3 w-3" /> Edit
+        </button>
+      </div>
+      {entries.length > 0 && (
+        <dl className="mt-2 grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
+          {entries.map(([key, value]) => (
+            <div key={key} className="flex min-w-0 justify-between gap-3">
+              <dt className="truncate text-dim">{PARAM_INFO[key]?.label ?? key}</dt>
+              <dd className="truncate font-mono text-fg" title={paramText(value)}>
+                {paramText(value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {node.prompt && <p className="mt-3 line-clamp-3 rounded-md bg-deep p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-line text-muted">{node.prompt}</p>}
+    </div>
   );
 }
 
@@ -176,6 +179,9 @@ export function NodeDetails({
   exec,
   runId,
   now,
+  models,
+  tab,
+  onTab,
   onChanged,
   onDeleted,
 }: {
@@ -183,11 +189,13 @@ export function NodeDetails({
   exec: RunNode | null;
   runId: number | null;
   now: number;
+  models: ModelOption[];
+  tab: Tab;
+  onTab: (t: Tab) => void;
   onChanged: () => void;
   onDeleted: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("Overview");
-  if (!node) return <EmptyState title="Select a node" className="card min-h-[420px]">Click a node in the graph to inspect its last execution and edit its rules.</EmptyState>;
+  if (!node) return <EmptyState title="Select a step" className="card min-h-[420px]">Click a step in the graph to see its last execution and edit its rules.</EmptyState>;
   const meta = NODE_META[node.type] ?? NODE_META.custom_prompt;
   const Icon = meta.icon;
   const status = node.enabled ? (exec?.status ?? "idle") : "skipped";
@@ -196,7 +204,7 @@ export function NodeDetails({
   const index = runId ? `#${runId}.${node.id}` : node.id;
 
   return (
-    <section className="card p-5" aria-labelledby="node-title">
+    <section className="card scroll-mt-4 p-5" aria-labelledby="node-title">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-[15px] font-medium">Step details</h2>
         <span className="flex items-center gap-2 font-mono text-xs text-muted">
@@ -205,23 +213,32 @@ export function NodeDetails({
         </span>
       </div>
       <div className="mt-4 flex items-center gap-5">
-        <span className="flex h-14 w-14 items-center justify-center rounded-xl border border-line bg-panel-3 text-muted">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-3 text-muted">
           {node.type === "youtube_search" ? <YoutubeGlyph className="h-5 w-7" /> : <Icon className="h-6 w-6" strokeWidth={1.5} />}
         </span>
-        <div>
-          <p id="node-title" className="text-xl font-medium">{node.name}</p>
-          <p className="text-[13px] text-muted">{index}</p>
+        <div className="min-w-0 flex-1">
+          <p id="node-title" className="text-xl font-medium">
+            {node.name}
+          </p>
+          <p className="text-[13px] text-muted">
+            {meta.kind} · {index}
+          </p>
         </div>
+        {tab !== "Rules" && (
+          <button type="button" onClick={() => onTab("Rules")} className="btn-secondary flex h-9 shrink-0 items-center gap-2 px-3 text-[13px]">
+            <Pencil className="h-3.5 w-3.5 text-dim" strokeWidth={1.5} /> Edit rules
+          </button>
+        )}
       </div>
 
-      <div role="tablist" aria-label="Node details" className="mt-5 flex gap-6 overflow-x-auto border-b border-line text-sm">
+      <div role="tablist" aria-label="Step details" className="mt-5 flex gap-6 overflow-x-auto border-b border-line text-sm">
         {TABS.map((t) => (
           <button
             key={t}
             role="tab"
             type="button"
             aria-selected={tab === t}
-            onClick={() => setTab(t)}
+            onClick={() => onTab(t)}
             className={clsx("-mb-px border-b-2 pb-2.5 whitespace-nowrap", tab === t ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg")}
           >
             {t}
@@ -266,14 +283,10 @@ export function NodeDetails({
                 </div>
               </div>
             )}
-            {node.prompt && (
-              <div className="mt-4">
-                <p className="mb-1.5 text-xs text-muted">Prompt</p>
-                <p className="line-clamp-4 rounded-lg bg-deep p-3 text-xs leading-relaxed whitespace-pre-line text-muted">{node.prompt}</p>
-              </div>
-            )}
+            <RulesSummary node={node} onEdit={() => onTab("Rules")} />
           </div>
         )}
+        {tab === "Rules" && <RulesForm key={node.id} node={node} models={models} onSaved={onChanged} onDeleted={onDeleted} />}
         {tab === "Input" && <JsonBlock value={exec?.input} />}
         {tab === "Output" && <JsonBlock value={exec?.output} />}
         {tab === "Logs" &&
@@ -289,7 +302,6 @@ export function NodeDetails({
               ))}
             </ol>
           ))}
-        {tab === "Settings" && <Settings key={node.id} node={node} onSaved={onChanged} onDeleted={onDeleted} />}
       </div>
     </section>
   );

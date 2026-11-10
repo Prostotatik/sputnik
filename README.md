@@ -55,7 +55,9 @@ Data is stored in SQLite at `data/sputnik.db`. Override the location with `SPUTN
    - embeds the game for the similar-games search.
 3. **After the run.** The worker refreshes the similar-game lists and writes AI key insights for Analytics.
 
-Every step, prompt and parameter is a node in the **Workers** tab, and edits apply from the next run. For example, you can change games per run, the interval, the clip length, the daily video budget or a prompt, or disable a step. **Add rule** creates a custom prompt node whose answer is shown on each game card. **Reset to defaults** restores the rules from the brief.
+Every step, prompt and parameter is a node in the **Workers** tab, and edits apply from the next run. Click a step, then **Edit rules**. Each parameter has a short explanation, the model is picked from the catalog, and prompt placeholders are inserted by clicking them. For example, you can change games per run, the interval, the clip length, the daily video budget or a prompt, or disable a step. **Add rule** opens a dialog for a custom prompt node, with example rules and a **Test** button that runs the prompt once on a library game without saving the answer. The answer of a saved rule is shown on each game card. **Reset to defaults** restores the rules from the brief.
+
+The schedule counts from the start of the previous run. A run that starts at 01:23 and takes 48 seconds is followed by the next one at 02:23.
 
 ## AI model rotation
 
@@ -80,5 +82,12 @@ node scripts/ui-smoke.mjs http://localhost:3000 /tmp   # browser check against a
 ## Security notes
 
 This is a single-user local tool and has no login. Run it on a trusted machine or behind your own auth.
+
+Live status reaches the browser over Server-Sent Events (`/api/stream`). If a reverse proxy compresses that stream, it buffers the events. The UI then falls back to polling `/api/status`, but you should exclude the stream from compression. With Caddy:
+
+```caddyfile
+@notStream not path /api/stream
+encode @notStream zstd gzip
+```
 
 `src/proxy.ts` only accepts API requests whose Host is `localhost`, `127.0.0.1` or listed in `SPUTNIK_ALLOWED_HOSTS` (comma-separated), which blocks DNS rebinding. It also rejects cross-site state-changing requests such as Run Now and rule edits. Exported CSV cells are escaped against spreadsheet formula injection.

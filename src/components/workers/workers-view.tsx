@@ -1,8 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { Plus, RotateCcw, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { MousePointerClick, RotateCcw } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import type { WorkersData } from "@/core/queries";
 import type { Run } from "@/lib/db/schema";
 import { clock, duration, num } from "@/lib/client/format";
@@ -11,7 +11,8 @@ import { EmptyState, RunNowButton, SearchBox, TelemetryDot, TopBar } from "../sh
 import { useStatus } from "../status";
 import { CardTitle, Select } from "../ui";
 import { NODE_META, STATUS_META } from "./node-meta";
-import { NodeDetails } from "./node-details";
+import { AddRuleDialog } from "./add-rule-dialog";
+import { NodeDetails, type Tab } from "./node-details";
 import { PipelineGraph, type NodeExec } from "./pipeline-graph";
 
 function Kpi({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
@@ -24,60 +25,7 @@ function Kpi({ label, value, sub }: { label: string; value: React.ReactNode; sub
   );
 }
 
-function AddRule({ onAdded }: { onAdded: (id: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [label, setLabel] = useState("");
-  const [fieldKey, setFieldKey] = useState("");
-  const [errors, setErrors] = useState<string[]>([]);
-  const submit = async () => {
-    const res = await fetch("/api/pipeline", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "add", label, fieldKey: fieldKey || label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") }),
-    });
-    const body = await res.json();
-    if (!res.ok) return setErrors(body.errors ?? ["Could not add the rule"]);
-    setOpen(false);
-    setLabel("");
-    setFieldKey("");
-    setErrors([]);
-    onAdded(body.id);
-  };
-  if (!open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
-        <Plus className="h-4 w-4 text-dim" strokeWidth={1.5} /> Add rule
-      </button>
-    );
-  }
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void submit();
-      }}
-      className="card flex flex-wrap items-end gap-3 p-3"
-    >
-      <label className="flex flex-col gap-1 text-[11px] text-muted">
-        Field shown on game cards
-        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Monetization" required className="h-9 w-48 rounded-lg border border-line bg-panel-2 px-3 text-[13px] text-fg focus:border-line-2 focus:outline-none" />
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] text-muted">
-        Key (optional)
-        <input value={fieldKey} onChange={(e) => setFieldKey(e.target.value)} placeholder="monetization" className="h-9 w-36 rounded-lg border border-line bg-panel-2 px-3 text-[13px] text-fg focus:border-line-2 focus:outline-none" />
-      </label>
-      <button type="submit" className="btn-primary h-9 px-4 text-[13px] font-medium">
-        Add rule
-      </button>
-      <button type="button" onClick={() => setOpen(false)} aria-label="Cancel" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:text-fg">
-        <X className="h-4 w-4" />
-      </button>
-      {errors.length > 0 && <p role="alert" className="w-full text-xs text-bad">{errors.join("; ")}</p>}
-    </form>
-  );
-}
-
-const LEGEND_KINDS = ["sync", "fetch_games", "parse_game", "similar", "critic_summary", "youtube_search", "transcribe", "insights", "custom_prompt"] as const;
+const LEGEND_KINDS = ["sync", "fetch_games", "parse_game", "similar", "critic_summary", "youtube_search", "transcribe", "letsplay_summary", "insights", "custom_prompt"] as const;
 
 export function WorkersView() {
   const { status } = useStatus();
@@ -87,6 +35,18 @@ export function WorkersView() {
   const [selectedId, setSelectedId] = useState<string | null>("fetch");
   const [filter, setFilter] = useState("");
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [tab, setTab] = useState<Tab>("Overview");
+  const detailsRef = useRef<HTMLDivElement>(null);
+
+  /** Selects a step and brings its details into view when they are below the fold (always, when opening a tab). */
+  const selectNode = (id: string, openTab?: Tab) => {
+    setSelectedId(id);
+    if (openTab) setTab(openTab);
+    requestAnimationFrame(() => {
+      const el = detailsRef.current;
+      if (el && (openTab || el.getBoundingClientRect().top > window.innerHeight - 160)) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const runId = mode === "history" && historyRun ? historyRun : "";
   // Live mode refetches whenever the streamed run state changes.
@@ -137,10 +97,11 @@ export function WorkersView() {
         left={<SearchBox value={filter} onChange={setFilter} placeholder="Search steps" />}
         right={
           <>
-            <AddRule
+            <AddRuleDialog
+              models={data?.models ?? []}
               onAdded={(id) => {
-                setSelectedId(id);
                 view.refresh();
+                selectNode(id, "Rules");
               }}
             />
             <button type="button" onClick={resetAll} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
@@ -159,8 +120,20 @@ export function WorkersView() {
           </div>
           <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 max-lg:basis-full lg:max-w-[700px] lg:flex-nowrap">
             <Kpi label="Steps running" value={`${runningCount} of ${enabledCount}`} sub="enabled steps" />
-            <Kpi label="Processed today" value={num(status?.totals.processedToday ?? 0)} sub="games" />
-            <Kpi label="Last run" value={clock(status?.run?.startedAt)} sub={status?.run ? (status.run.status === "failed" ? "failed" : status.run.status === "running" ? "in progress" : "finished") : "no runs yet"} />
+            <Kpi label="Processed today" value={num(status?.totals.processedToday)} sub="games" />
+            <Kpi
+              label="Last run"
+              value={clock(status?.run?.startedAt)}
+              sub={
+                !status
+                  ? "loading"
+                  : status.run
+                    ? status.run.status === "running"
+                      ? "in progress"
+                      : `${status.run.status === "failed" ? "failed" : "took"} ${duration((status.run.finishedAt ?? status.run.startedAt) - status.run.startedAt)}, next ${clock(status.worker.nextRunAt)}`
+                    : "no runs yet"
+              }
+            />
           </div>
         </div>
 
@@ -206,10 +179,13 @@ export function WorkersView() {
         <div className="mt-2 grid gap-4 lg:grid-cols-[1fr_160px]">
           <div className="relative min-w-0">
             {nodes.length ? (
-              <PipelineGraph nodes={nodes} exec={exec} selectedId={selectedId} onSelect={setSelectedId} now={now} runLabel={run ? `#${run.id}` : null} />
+              <PipelineGraph nodes={nodes} exec={exec} selectedId={selectedId} onSelect={(id) => selectNode(id)} now={now} runLabel={run ? `#${run.id}` : null} />
             ) : (
               <EmptyState title={view.loading ? "Loading pipeline…" : "No nodes match this search"} className="h-[520px]" />
             )}
+            <p className="pointer-events-none absolute right-3 bottom-3 flex items-center gap-1.5 text-xs text-dim max-lg:hidden">
+              <MousePointerClick className="h-3.5 w-3.5" strokeWidth={1.5} /> Click a step to see its run and edit its rules
+            </p>
           </div>
           <aside className="card hidden h-fit space-y-2 p-4 text-[13px] lg:block" aria-label="Legend">
             {LEGEND_KINDS.map((t) => {
@@ -231,18 +207,24 @@ export function WorkersView() {
           </aside>
         </div>
 
-        <div className="mt-4 grid gap-5 pb-8 lg:grid-cols-[1.1fr_1fr]">
-          <NodeDetails
-            node={selected}
-            exec={selectedExec}
-            runId={run?.id ?? null}
-            now={now}
-            onChanged={view.refresh}
-            onDeleted={() => {
-              setSelectedId("sync");
-              view.refresh();
-            }}
-          />
+        <div className="mt-4 grid items-start gap-5 pb-8 lg:grid-cols-[1.1fr_1fr]">
+          <div ref={detailsRef} className="min-w-0 scroll-mt-4">
+            <NodeDetails
+              node={selected}
+              exec={selectedExec}
+              runId={run?.id ?? null}
+              now={now}
+              models={data?.models ?? []}
+              tab={tab}
+              onTab={setTab}
+              onChanged={view.refresh}
+              onDeleted={() => {
+                setSelectedId("sync");
+                setTab("Overview");
+                view.refresh();
+              }}
+            />
+          </div>
           <section className="card p-5" aria-labelledby="history-title">
             <CardTitle
               right={

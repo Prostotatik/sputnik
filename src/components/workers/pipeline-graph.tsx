@@ -170,6 +170,8 @@ export function PipelineGraph({
   return (
     <div className="h-[520px] w-full [--xy-background-color:transparent] [--xy-edge-label-background-color:transparent]">
       <ReactFlow
+        // Remount when steps are added, removed or filtered so fitView frames the new graph.
+        key={nodes.map((n) => n.id).join()}
         nodes={flowNodes}
         edges={edges}
         nodeTypes={nodeTypes}

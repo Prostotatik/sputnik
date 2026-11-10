@@ -1,11 +1,9 @@
-import { eq } from "drizzle-orm";
 import type { Db } from "@/lib/db/client";
-import { gamePlatforms, games } from "@/lib/db/schema";
 import { dayKey } from "@/lib/time";
 import { QuotaExhaustedError } from "@/core/ai/router";
 import type { AiService } from "@/core/ai/service";
 import { computeAnalytics } from "@/core/analytics";
-import { generateKeyInsights, runCustomField, type GameContext } from "@/core/enrich/custom";
+import { gameContext, generateKeyInsights, runCustomField } from "@/core/enrich/custom";
 import { embeddingHash, embeddingText, refreshSimilar, saveEmbedding, textHash } from "@/core/enrich/similarity";
 import { balancedSample, getSummary, needsSummary, saveSummary, summarizeReviews } from "@/core/enrich/summaries";
 import {
@@ -447,21 +445,4 @@ async function processLetsplay(
     }
     return;
   }
-}
-
-export function gameContext(db: Db, gameId: number): GameContext {
-  const g = db.select().from(games).where(eq(games.id, gameId)).get()!;
-  const platforms = db.select({ name: gamePlatforms.name }).from(gamePlatforms).where(eq(gamePlatforms.gameId, gameId)).all();
-  return {
-    title: g.title,
-    genres: g.genres,
-    platforms: platforms.map((p) => p.name),
-    developer: g.developer,
-    description: g.description,
-    metascore: g.metascore,
-    userscore: g.userscore,
-    criticVerdict: getSummary(db, gameId, "critic")?.verdict ?? null,
-    userVerdict: getSummary(db, gameId, "user")?.verdict ?? null,
-    letsplayConclusion: getInsight(db, gameId)?.conclusion ?? null,
-  };
 }

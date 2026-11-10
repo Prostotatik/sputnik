@@ -39,7 +39,11 @@ The user SHALL be able to reset a node or the whole pipeline to the default rule
 - **THEN** all nodes return to default prompts and parameters and custom nodes are removed
 
 ### Requirement: Custom prompt nodes
-The user SHALL be able to add a custom prompt node with a name, an output field key and a prompt over the game data; the worker SHALL run it for each processed game and store the result as an extra field shown on the game card.
+The user SHALL be able to add a custom prompt node with a name, an output field key and a prompt over the game data; the worker SHALL run it for each processed game and store the result as an extra field shown on the game card. Adding a rule SHALL happen in a dialog that offers example rules, clickable placeholders, a "only games with reviews" option, a model choice and a one-off test on a library game that does not store the answer. The node SHALL be drawn after the let's-play verdict, where it runs.
+
+#### Scenario: Test before saving
+- **WHEN** the user writes a prompt and presses Test with a game selected
+- **THEN** the model's answer for that game is shown and nothing is saved
 
 #### Scenario: Add custom field
 - **WHEN** the user adds a custom node "Monetization" with a prompt and runs the pipeline
@@ -53,7 +57,7 @@ Each node SHALL display live status (idle, queued, running, success, failed), el
 - **THEN** the Analyze Reviews node shows "Running" with an increasing timer
 
 ### Requirement: Node details
-Selecting a node SHALL show its details with tabs Overview (status, duration, start time, agent type, description), Input, Output and Logs from its latest execution, plus a Settings editor.
+Selecting a node SHALL show its details with tabs Overview (status, duration, start time, agent type, description, current rules), Rules (an editor with a help line for every parameter and a model picker), Input, Output and Logs from its latest execution. An "Edit rules" button SHALL open the Rules tab directly.
 
 #### Scenario: Inspect node output
 - **WHEN** the user selects the Fetch New Games node and opens Output

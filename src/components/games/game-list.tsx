@@ -1,29 +1,40 @@
 "use client";
 
 import clsx from "clsx";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Maximize2 } from "lucide-react";
 import type { GameListItem } from "@/core/queries";
-import { num, timeAgo } from "@/lib/client/format";
+import { num, shortDate, timeAgo } from "@/lib/client/format";
 import { EmptyState } from "../shell";
 import { PlatformBadges, ScoreBadge, Skeleton } from "../ui";
+
+export const SORT_OPTIONS = [
+  { value: "release", label: "Sort: Newest release" },
+  { value: "metascore", label: "Sort: Metascore" },
+  { value: "userscore", label: "Sort: Userscore" },
+  { value: "updated", label: "Sort: Recently updated" },
+];
 
 export function GameList({
   items,
   total,
+  sort,
   selected,
   onSelect,
-  onMore,
+  onShowAll,
   loading,
   filtered,
 }: {
   items: GameListItem[];
   total: number;
+  sort: string;
   selected: string | null;
   onSelect: (slug: string) => void;
-  onMore: () => void;
+  onShowAll: () => void;
   loading: boolean;
   filtered: boolean;
 }) {
+  // The right-hand label shows the field the list is sorted by, so the order always reads correctly.
+  const byUpdate = sort === "updated";
   return (
     <section aria-label="Game list" className="flex flex-col">
       <div className="mb-3 flex items-baseline justify-between px-1">
@@ -68,7 +79,12 @@ export function GameList({
                     </span>
                   </span>
                   <ScoreBadge score={g.metascore} />
-                  <span className="w-14 text-right font-mono text-xs whitespace-nowrap text-dim">{timeAgo(g.updatedAt)}</span>
+                  <span
+                    className="w-14 text-right font-mono text-xs whitespace-nowrap text-dim"
+                    title={byUpdate ? `Updated ${new Date(g.updatedAt).toLocaleString("en-US")}` : `Released ${g.releaseDate ?? "date not announced"}`}
+                  >
+                    {byUpdate ? timeAgo(g.updatedAt) : shortDate(g.releaseDate)}
+                  </span>
                 </button>
               </li>
             );
@@ -78,12 +94,11 @@ export function GameList({
       {items.length < total && (
         <button
           type="button"
-          onClick={onMore}
-          disabled={loading}
+          onClick={onShowAll}
+          aria-haspopup="dialog"
           className="mx-auto mt-3 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-dim transition-colors hover:text-fg"
         >
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-          Show more <ChevronDown className="h-3.5 w-3.5" />
+          Show all {num(total)} games <Maximize2 className="h-3.5 w-3.5" />
         </button>
       )}
     </section>

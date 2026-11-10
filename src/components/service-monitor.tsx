@@ -1,6 +1,6 @@
 "use client";
 
-import { num, timeAgo, timeUntil } from "@/lib/client/format";
+import { clock, duration, every, num, timeAgo, timeUntil } from "@/lib/client/format";
 import { useNow } from "@/lib/client/hooks";
 import { TelemetryDot } from "./shell";
 import { useStatus } from "./status";
@@ -12,6 +12,11 @@ export function ServiceMonitor() {
   const run = status?.run;
   const active = Boolean(status?.active && run);
   const state = !status?.worker.online ? "offline" : active ? "running" : "idle";
+  const interval = every(status?.worker.intervalMinutes);
+  const lastRun =
+    run && run.status !== "running"
+      ? `Last run ${clock(run.startedAt)} ${run.status === "failed" ? "failed" : "finished"} in ${duration((run.finishedAt ?? run.startedAt) - run.startedAt)}: ${run.added} added, ${run.updated} updated${run.errors ? `, ${run.errors} errors` : ""}.`
+      : null;
   const pct = active && run && run.total ? (run.processed / run.total) * 100 : 0;
   const nodes = status?.nodes ?? [];
   const count = (s: string) => nodes.filter((n) => n.status === s).length;
@@ -39,20 +44,26 @@ export function ServiceMonitor() {
             </div>
           </>
         ) : (
-          <p className="mt-2 text-[13px] text-muted">
-            {state === "offline"
-              ? "The worker is not running"
-              : run
-                ? `Idle. Last run ${run.status === "failed" ? "failed" : "finished"} ${timeAgo(run.finishedAt ?? run.startedAt, now)}`
-                : "No runs yet"}
-          </p>
+          <>
+            <p className="mt-2 text-[13px] text-muted">
+              {!status
+                ? "Connecting…"
+                : state === "offline"
+                  ? "The worker is not running"
+                  : lastRun
+                    ? `Idle. ${lastRun}`
+                    : "No runs yet"}
+            </p>
+            {status && interval && <p className="mt-1 font-mono text-xs text-dim">Runs {interval}, counted from the start of the previous run</p>}
+          </>
         )}
       </div>
 
       <dl className="grid grid-cols-3 gap-8 border-line lg:border-x lg:px-8">
         <div>
           <dt className="text-xs text-dim">Next run</dt>
-          <dd className="mt-1 text-xl font-medium tabular-nums">{state === "offline" ? "—" : active ? "after this one" : timeUntil(status?.worker.nextRunAt, now)}</dd>
+          <dd className="mt-1 text-xl font-medium whitespace-nowrap tabular-nums">{state === "offline" ? "—" : active ? "after this one" : clock(status?.worker.nextRunAt)}</dd>
+          {state === "idle" && <dd className="font-mono text-xs text-dim tabular-nums">{timeUntil(status?.worker.nextRunAt, now)}</dd>}
         </div>
         <div>
           <dt className="text-xs text-dim">Library</dt>

@@ -14,11 +14,15 @@ The web UI SHALL use a dark shell with a left sidebar (logo, tabs Games, Workers
 - **THEN** the corresponding page opens and the tab is highlighted as active
 
 ### Requirement: Game list
-The Games tab SHALL list loaded games with cover, title, platform badges, Metascore badge and time since last update, plus the total game count, with incremental "Show more" loading.
+The Games tab SHALL list loaded games with cover, title, platform badges, Metascore badge and the release date (or the time since last update when sorted by it), plus the total game count. "Show all" SHALL open a library dialog with search, platform filter, sort and paged results; picking a game there opens its card and closes the dialog.
 
 #### Scenario: Library with games
 - **WHEN** the library has 60 games
-- **THEN** the list shows the first page with the total "60 games" and "Show more" reveals more
+- **THEN** the list shows the first 10 with the total "60 games", and "Show all 60 games" opens the library dialog
+
+#### Scenario: Close the library dialog
+- **WHEN** the user presses Esc or clicks outside the dialog
+- **THEN** the dialog closes and the page keeps its filters
 
 ### Requirement: Platform filter
 The user SHALL be able to filter the list by platform; options SHALL come from platforms present in the library.
@@ -35,7 +39,11 @@ The user SHALL be able to search games by title (case-insensitive substring).
 - **THEN** only games whose title contains "elden" are listed
 
 ### Requirement: Rating sort
-The user SHALL be able to sort by Metascore, Userscore, newest release and recently updated; games without a score SHALL sort last.
+The user SHALL be able to sort by Metascore, Userscore, newest release and recently updated; games without a score SHALL sort last. Newest release SHALL be the default, with same-day releases ordered by when they were first collected and undated games last.
+
+#### Scenario: Default order
+- **WHEN** the user opens the Games tab without choosing a sort
+- **THEN** the most recently released games are listed first
 
 #### Scenario: Sort by Metascore
 - **WHEN** the user selects "Sort by: Metascore"

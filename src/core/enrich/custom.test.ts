@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { openDb } from "@/lib/db/client";
-import { analyticsInsights, gameCustomFields, games } from "@/lib/db/schema";
+import { analyticsInsights, gameCustomFields, gamePlatforms, games } from "@/lib/db/schema";
 import type { AiService } from "../ai/service";
 import { computeAnalytics } from "../analytics";
-import { generateKeyInsights, runCustomField, type GameContext } from "./custom";
+import { generateKeyInsights, previewCustomField, runCustomField, type GameContext } from "./custom";
 
 const game: GameContext = {
   title: "Elden Ring",
@@ -47,6 +47,23 @@ describe("custom prompt nodes", () => {
     expect(db.select().from(gameCustomFields).all()).toEqual([
       expect.objectContaining({ gameId: id, key: "monetization", label: "Monetization", value: "Premium, no microtransactions." }),
     ]);
+  });
+});
+
+describe("custom rule preview", () => {
+  it("renders the prompt from library data and stores nothing", async () => {
+    const db = openDb(":memory:");
+    const { id } = db
+      .insert(games)
+      .values({ slug: "er", title: "Elden Ring", genres: ["Action RPG"], metascore: 96, metacriticUrl: "u", source: "browse", firstSeenAt: 1, updatedAt: 1 })
+      .returning({ id: games.id })
+      .get();
+    db.insert(gamePlatforms).values({ gameId: id, slug: "pc", name: "PC" }).run();
+    const ai = fakeAi("  Premium.  ");
+    const res = await previewCustomField(db, ai, { slug: "er", prompt: "{{title}} ({{genres}}) on {{platforms}}, meta {{metascore}}, critics: {{criticVerdict}}" });
+    expect(res).toEqual({ value: "Premium.", model: "fake", game: "Elden Ring", prompt: "Elden Ring (Action RPG) on PC, meta 96, critics: n/a" });
+    expect(db.select().from(gameCustomFields).all()).toHaveLength(0);
+    expect(await previewCustomField(db, ai, { slug: "missing", prompt: "x {{title}}" })).toBeNull();
   });
 });
 

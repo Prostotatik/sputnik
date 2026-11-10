@@ -10,15 +10,11 @@ import { RunNowButton, SearchBox, TopBar } from "../shell";
 import { useStatus } from "../status";
 import { Select } from "../ui";
 import { GameDetail, GameExtras, SimilarGames, YoutubeInsight } from "./game-detail";
-import { GameList } from "./game-list";
+import { GameList, SORT_OPTIONS } from "./game-list";
+import { LibraryDialog } from "./library-dialog";
 
 const PAGE = 10;
-const SORTS = [
-  { value: "metascore", label: "Sort: Metascore" },
-  { value: "userscore", label: "Sort: Userscore" },
-  { value: "release", label: "Sort: Newest release" },
-  { value: "updated", label: "Sort: Recently updated" },
-];
+const DEFAULT_SORT = "release";
 
 export function GamesView() {
   const params = useSearchParams();
@@ -26,12 +22,12 @@ export function GamesView() {
   const pathname = usePathname();
   const { status } = useStatus();
   const platform = params.get("platform") ?? "";
-  const sort = params.get("sort") ?? "metascore";
+  const sort = params.get("sort") ?? DEFAULT_SORT;
   const selected = params.get("game");
   const [q, setQ] = useState(params.get("q") ?? "");
   const [debouncedQ, setDebouncedQ] = useState(q);
   const [list, setList] = useState<{ query: string; items: GameListItem[]; total: number }>({ query: "", items: [], total: 0 });
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [mobileDetail, setMobileDetail] = useState(Boolean(selected));
 
   const setParam = useCallback(
@@ -66,33 +62,22 @@ export function GamesView() {
     [query],
   );
 
-  // Reload when filters change, and live-refresh while the worker adds games (keeping loaded rows).
-  const loadedCount = list.query === query ? list.items.length : 0;
+  // Reload when filters change, and live-refresh while the worker adds games.
   useEffect(() => {
     let cancelled = false;
     const id = setTimeout(async () => {
-      const body = await fetchList(0, Math.max(PAGE, Math.min(100, loadedCount)));
+      const body = await fetchList(0, PAGE);
       if (!cancelled) setList({ query, ...body });
     }, 150);
     return () => {
       cancelled = true;
       clearTimeout(id);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchList, lastUpdate]);
+  }, [fetchList, query, lastUpdate]);
 
-  const loadMore = async () => {
-    setLoadingMore(true);
-    try {
-      const body = await fetchList(list.items.length, PAGE);
-      setList((prev) => ({ query, items: [...prev.items, ...body.items], total: body.total }));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
   const items = list.query === query ? list.items : [];
   const total = list.query === query ? list.total : 0;
-  const loading = list.query !== query || loadingMore;
+  const loading = list.query !== query;
 
   const current = selected ?? items[0]?.slug ?? null;
   const detail = useJson<GameDetailData>(current ? `/api/games/${encodeURIComponent(current)}` : null);
@@ -124,7 +109,7 @@ export function GamesView() {
               options={[{ value: "", label: "All platforms" }, ...(platforms.data ?? []).map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
               className="w-[170px]"
             />
-            <Select label="Sort" value={sort} onChange={(v) => setParam({ sort: v === "metascore" ? null : v })} options={SORTS} className="w-[190px]" />
+            <Select label="Sort" value={sort} onChange={(v) => setParam({ sort: v === DEFAULT_SORT ? null : v })} options={SORT_OPTIONS} className="w-[210px]" />
             <RunNowButton />
           </>
         }
@@ -134,12 +119,26 @@ export function GamesView() {
           <GameList
             items={items}
             total={total}
+            sort={sort}
             selected={current}
             onSelect={select}
-            onMore={loadMore}
+            onShowAll={() => setLibraryOpen(true)}
             loading={loading}
             filtered={Boolean(debouncedQ || platform)}
           />
+          {libraryOpen && (
+            <LibraryDialog
+              open
+              onClose={() => setLibraryOpen(false)}
+              initial={{ q: debouncedQ, platform, sort }}
+              platforms={platforms.data ?? []}
+              selected={current}
+              onSelect={(slug) => {
+                setLibraryOpen(false);
+                select(slug);
+              }}
+            />
+          )}
         </div>
         <div className={clsx(!mobileDetail && "hidden lg:block")}>
           <GameDetail data={detailData} loading={detail.loading || loading} onBack={() => setMobileDetail(false)} />

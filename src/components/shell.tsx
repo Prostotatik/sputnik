@@ -5,7 +5,7 @@ import { Activity, ChartColumnBig, ChartPie, Gamepad2, Loader2, Play, Search } f
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { timeAgo, timeUntil } from "@/lib/client/format";
+import { clock, timeAgo, timeUntil } from "@/lib/client/format";
 import { useNow } from "@/lib/client/hooks";
 import { useStatus } from "./status";
 
@@ -42,12 +42,13 @@ export function TelemetryDot({ state, className }: { state: "running" | "idle" |
 function useWorkerState(): { state: "running" | "idle" | "offline"; label: string; detail: string } {
   const { status, connected } = useStatus();
   const now = useNow(10_000);
-  if (!status || !connected) return { state: "offline", label: "Connecting", detail: "Waiting for the server" };
+  if (!status) return { state: "offline", label: "Connecting", detail: "Loading service status" };
+  if (!connected) return { state: "offline", label: "Connection lost", detail: "Retrying…" };
   if (!status.worker.online) return { state: "offline", label: "Worker offline", detail: status.worker.beatAt ? `Last seen ${timeAgo(status.worker.beatAt, now)}` : "Start it with pnpm worker" };
   if (status.active && status.run) {
     return { state: "running", label: "Collecting", detail: `${status.run.processed} of ${status.run.total} games` };
   }
-  return { state: "idle", label: "Worker idle", detail: `Next run ${timeUntil(status.worker.nextRunAt, now)}` };
+  return { state: "idle", label: "Worker idle", detail: `Next run ${clock(status.worker.nextRunAt)}, ${timeUntil(status.worker.nextRunAt, now)}` };
 }
 
 export function Sidebar() {

@@ -1,8 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { ChevronDown } from "lucide-react";
-import type { ReactNode } from "react";
+import { ChevronDown, X } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { scoreTone } from "@/lib/client/format";
 import { shortPlatform } from "@/lib/platforms";
 
@@ -115,6 +115,64 @@ export function Change({ value, suffix = "", against }: { value: number | null; 
       </span>
       <span className="text-dim"> vs {against}</span>
     </span>
+  );
+}
+
+/** Native modal dialog: Esc and a backdrop click close it; full screen on phones. */
+export function Dialog({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  className,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (open && !d.open) d.showModal();
+    else if (!open && d.open) d.close();
+  }, [open]);
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => e.target === ref.current && onClose()}
+      aria-labelledby="dialog-title"
+      className={clsx(
+        "m-auto max-h-[calc(100dvh-48px)] w-[min(960px,calc(100vw-32px))] overflow-hidden rounded-[var(--radius-card)] border border-line-2 bg-panel p-0 text-fg backdrop:bg-black/70",
+        "max-sm:h-dvh max-sm:max-h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none",
+        className,
+      )}
+    >
+      {open && (
+        <div className="flex max-h-[inherit] flex-col max-sm:h-full">
+          <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+            <div className="min-w-0">
+              <h2 id="dialog-title" className="text-[17px] font-medium">
+                {title}
+              </h2>
+              {subtitle && <p className="mt-0.5 text-[13px] text-muted">{subtitle}</p>}
+            </div>
+            <button type="button" onClick={onClose} aria-label="Close" className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-panel-3 hover:text-fg">
+              <X className="h-4 w-4" />
+            </button>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">{footer}</footer>}
+        </div>
+      )}
+    </dialog>
   );
 }
 

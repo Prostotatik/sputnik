@@ -34,6 +34,7 @@ export function GET(req: Request) {
     },
   });
   return new Response(stream, {
-    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", Connection: "keep-alive" },
+    // Compressing proxies buffer SSE frames; the client falls back to polling /api/status when that happens.
+    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", Connection: "keep-alive", "X-Accel-Buffering": "no" },
   });
 }

@@ -7,7 +7,15 @@ Lets operators watch the service in real time: worker and run state, processing 
 ## Requirements
 
 ### Requirement: Realtime status stream
-The server SHALL push service status to the browser continuously (worker heartbeat, active run, current step, progress, node statuses, recent events) with updates at least every 2 seconds while a page is open.
+The server SHALL push service status to the browser continuously (worker heartbeat, active run, current step, progress, node statuses, recent events) with updates at least every 2 seconds while a page is open. When the stream delivers nothing fresh for 4 seconds (for example, a compressing reverse proxy buffers it), the browser SHALL poll a JSON status snapshot instead, and SHALL never replace a newer snapshot with an older one.
+
+#### Scenario: First paint
+- **WHEN** a page opens
+- **THEN** the service status is shown within about a second, without waiting for the first stream frame
+
+#### Scenario: Buffered stream
+- **WHEN** a proxy holds back the event stream
+- **THEN** the status still updates every few seconds from the JSON snapshot
 
 #### Scenario: Worker goes offline
 - **WHEN** the worker process stops sending heartbeats for more than 30 seconds

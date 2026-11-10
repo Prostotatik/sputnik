@@ -15,11 +15,16 @@ import {
   workerHeartbeat,
 } from "@/lib/db/schema";
 import { dayKey } from "@/lib/time";
+import { openAiApiKey } from "@/lib/env";
+import { isUnlimited, MODELS } from "./ai/catalog";
 import { usageSnapshot } from "./ai/router";
 import { listNodes, nodeOfType } from "./pipeline/repo";
 import { loadDailyState } from "./selection";
 
 export type GameSort = "metascore" | "userscore" | "release" | "updated";
+export const GAME_SORTS: GameSort[] = ["release", "metascore", "userscore", "updated"];
+/** The library is a feed of new games, so the newest release comes first by default. */
+export const DEFAULT_GAME_SORT: GameSort = "release";
 
 export interface GameListQuery {
   q?: string;
@@ -61,7 +66,8 @@ export function listGames(db: Db, query: GameListQuery): { items: GameListItem[]
   const order: Record<GameSort, SQL[]> = {
     metascore: [sql`${games.metascore} is null`, sql`${games.metascore} desc`, sql`${games.userscore} desc`],
     userscore: [sql`${games.userscore} is null`, sql`${games.userscore} desc`, sql`${games.metascore} desc`],
-    release: [sql`${games.releaseDate} is null`, sql`${games.releaseDate} desc`],
+    // Same-day releases: the most recently discovered first.
+    release: [sql`${games.releaseDate} is null`, sql`${games.releaseDate} desc`, sql`${games.firstSeenAt} desc`],
     updated: [sql`${games.updatedAt} desc`],
   };
   const rows = db
@@ -78,7 +84,7 @@ export function listGames(db: Db, query: GameListQuery): { items: GameListItem[]
     })
     .from(games)
     .where(cond)
-    .orderBy(...order[query.sort ?? "metascore"], games.id)
+    .orderBy(...order[query.sort ?? DEFAULT_GAME_SORT], games.id)
     .limit(Math.min(100, query.limit ?? 20))
     .offset(query.offset ?? 0)
     .all();
@@ -165,6 +171,7 @@ export function statusSnapshot(db: Db, now = Date.now()) {
       beatAt: hb?.beatAt ?? null,
       startedAt: hb?.startedAt ?? null,
       nextRunAt: hb?.nextRunAt ?? null,
+      intervalMinutes: sync.params.intervalMinutes,
     },
     run: latest && {
       id: latest.id,
@@ -203,7 +210,9 @@ export function workersView(db: Db, runId?: number) {
   const exec = run ? db.select().from(runNodes).where(eq(runNodes.runId, run.id)).all() : [];
   const events = run ? db.select().from(runEvents).where(eq(runEvents.runId, run.id)).orderBy(desc(runEvents.id)).limit(40).all() : [];
   const updatedAt = db.select({ t: sql<number>`max(${pipelineNodes.updatedAt})` }).from(pipelineNodes).get()?.t ?? 0;
-  return { nodes, run: run ?? null, exec, events, rulesUpdatedAt: updatedAt };
+  const openai = Boolean(openAiApiKey());
+  const models = MODELS.filter((m) => m.provider === "google" || openai).map((m) => ({ id: m.id, label: m.label, capabilities: m.capabilities, rpd: isUnlimited(m.rpd) ? null : m.rpd }));
+  return { nodes, run: run ?? null, exec, events, rulesUpdatedAt: updatedAt, models };
 }
 
 const DAY = 86_400_000;
