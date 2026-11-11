@@ -16,11 +16,15 @@ const NAV = [
   { href: "/monitoring", label: "Monitoring", icon: ChartColumnBig },
 ];
 
+const SPUTNIK_ANTENNAS = "M19.8 14.5 L36.5 18 M18.9 16.7 L33.4 25.7 M16.7 18.9 L25.7 33.4 M14.5 19.8 L18 36.5";
+
 export function Logo({ className }: { className?: string }) {
   return (
+    // Sputnik-1 silhouette: a sphere trailing four antennas.
     <svg viewBox="0 0 40 40" className={className} aria-hidden fill="none">
-      <path d="M8 31 L8 9 L32 31 L32 9" stroke="currentColor" strokeWidth="3.2" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx="32" cy="9" r="2.6" fill="currentColor" />
+      <path d={SPUTNIK_ANTENNAS} stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <circle cx="13" cy="13" r="7.5" className="fill-accent" />
+      <path d="M8.8 10 A5.5 5.5 0 0 1 13 7.5" stroke="#fff" strokeOpacity="0.5" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
