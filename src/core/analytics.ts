@@ -99,7 +99,7 @@ function bucketsFor(days: number, from: number, to: number): { start: number; la
   const span = to - from;
   const step = days === 0 || days > 120 ? 30 * DAY : days > 31 ? 7 * DAY : days > 7 ? 2 * DAY : DAY;
   const count = Math.max(1, Math.min(12, Math.ceil(span / step)));
-  const fmt = new Intl.DateTimeFormat("ru-RU", step >= 30 * DAY ? { month: "short" } : { month: "short", day: "numeric" });
+  const fmt = new Intl.DateTimeFormat("ru-RU", step >= 30 * DAY ? { month: "short" } : { day: "2-digit", month: "2-digit" });
   return Array.from({ length: count }, (_, i) => {
     const start = to - (count - i) * step;
     return { start, label: fmt.format(new Date(start + step)) };

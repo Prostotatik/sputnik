@@ -70,7 +70,7 @@ export function MonitoringView() {
         <h1 className="mt-3 text-[32px] leading-[1.15] font-medium">Мониторинг</h1>
         <p className="mt-1 text-sm text-muted">Здоровье воркера, пропускная способность и расход лимитов Gemini</p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3 2xl:grid-cols-6">
           <Stat
             label="Воркер"
             value={
@@ -153,10 +153,10 @@ export function MonitoringView() {
               Расход токенов за 14 дней
             </CardTitle>
             <ResponsiveContainer width="100%" height={250}>
-              <ComposedChart data={data?.days ?? []} margin={{ top: 16, right: 0, left: -10, bottom: 0 }}>
+              <ComposedChart data={data?.days ?? []} margin={{ top: 16, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="#232325" vertical={false} />
                 <XAxis dataKey="day" stroke="#85858b" fontSize={11} fontFamily="var(--font-geist-mono)" tickLine={false} axisLine={false} />
-                <YAxis yAxisId="t" stroke="#85858b" fontSize={11} fontFamily="var(--font-geist-mono)" tickLine={false} axisLine={false} tickFormatter={(v) => compact(v)} />
+                <YAxis yAxisId="t" width={64} stroke="#85858b" fontSize={11} fontFamily="var(--font-geist-mono)" tickLine={false} axisLine={false} tickFormatter={(v) => compact(v)} />
                 <YAxis yAxisId="c" orientation="right" stroke="#85858b" fontSize={11} fontFamily="var(--font-geist-mono)" tickLine={false} axisLine={false} tickFormatter={(v) => `$${Number(v).toFixed(2)}`} />
                 <Tooltip
                   contentStyle={{ background: "#111114", border: "1px solid #2e2e37", borderRadius: 10, fontSize: 12 }}
