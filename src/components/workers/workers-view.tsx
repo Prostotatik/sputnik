@@ -5,7 +5,7 @@ import { MousePointerClick, RotateCcw } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import type { WorkersData } from "@/core/queries";
 import type { Run } from "@/lib/db/schema";
-import { clock, duration, num } from "@/lib/client/format";
+import { clock, count, dateTime, duration, num, plural } from "@/lib/client/format";
 import { useJson, useNow } from "@/lib/client/hooks";
 import { EmptyState, RunNowButton, SearchBox, TelemetryDot, TopBar } from "../shell";
 import { useStatus } from "../status";
@@ -24,6 +24,9 @@ function Kpi({ label, value, sub }: { label: string; value: React.ReactNode; sub
     </div>
   );
 }
+
+const TRIGGER: Record<string, string> = { manual: "вручную", schedule: "по расписанию" };
+const RUN_STATUS: Record<string, string> = { running: "идёт", success: "успешно", failed: "с ошибкой" };
 
 const LEGEND_KINDS = ["sync", "fetch_games", "parse_game", "similar", "critic_summary", "youtube_search", "transcribe", "letsplay_summary", "insights", "custom_prompt"] as const;
 
@@ -86,7 +89,7 @@ export function WorkersView() {
   const events = data?.events ?? [];
 
   const resetAll = async () => {
-    if (!window.confirm("Reset every node to the default rules from the specification? Custom rules will be removed.")) return;
+    if (!window.confirm("Вернуть всем шагам стандартные правила из спецификации? Свои правила будут удалены.")) return;
     await fetch("/api/pipeline", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reset" }) });
     view.refresh();
   };
@@ -94,7 +97,7 @@ export function WorkersView() {
   return (
     <>
       <TopBar
-        left={<SearchBox value={filter} onChange={setFilter} placeholder="Search steps" />}
+        left={<SearchBox value={filter} onChange={setFilter} placeholder="Поиск шагов" />}
         right={
           <>
             <AddRuleDialog
@@ -105,7 +108,7 @@ export function WorkersView() {
               }}
             />
             <button type="button" onClick={resetAll} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
-              <RotateCcw className="h-4 w-4 text-dim" strokeWidth={1.5} /> Reset to defaults
+              <RotateCcw className="h-4 w-4 text-dim" strokeWidth={1.5} /> Сбросить всё
             </button>
             <RunNowButton />
           </>
@@ -115,30 +118,30 @@ export function WorkersView() {
       <div className="relative z-10 px-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="mt-3 text-[32px] leading-[1.15] font-medium">Workers</h1>
-            <p className="mt-1 text-sm text-muted">The collection pipeline and the rules each step follows</p>
+            <h1 className="mt-3 text-[32px] leading-[1.15] font-medium">Воркеры</h1>
+            <p className="mt-1 text-sm text-muted">Конвейер сбора данных и правила, по которым работает каждый шаг</p>
           </div>
           <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-3 max-lg:basis-full lg:max-w-[700px] lg:flex-nowrap">
-            <Kpi label="Steps running" value={`${runningCount} of ${enabledCount}`} sub="enabled steps" />
-            <Kpi label="Processed today" value={num(status?.totals.processedToday)} sub="games" />
+            <Kpi label="Шаги в работе" value={`${runningCount} из ${enabledCount}`} sub="включённых шагов" />
+            <Kpi label="Обработано сегодня" value={num(status?.totals.processedToday)} sub={plural(status?.totals.processedToday ?? 0, ["игра", "игры", "игр"])} />
             <Kpi
-              label="Last run"
+              label="Последний запуск"
               value={clock(status?.run?.startedAt)}
               sub={
                 !status
-                  ? "loading"
+                  ? "загрузка"
                   : status.run
                     ? status.run.status === "running"
-                      ? "in progress"
-                      : `${status.run.status === "failed" ? "failed" : "took"} ${duration((status.run.finishedAt ?? status.run.startedAt) - status.run.startedAt)}, next ${clock(status.worker.nextRunAt)}`
-                    : "no runs yet"
+                      ? "идёт сейчас"
+                      : `${status.run.status === "failed" ? "упал за" : "занял"} ${duration((status.run.finishedAt ?? status.run.startedAt) - status.run.startedAt)}, следующий в ${clock(status.worker.nextRunAt)}`
+                    : "запусков ещё не было"
               }
             />
           </div>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <div className="pill flex p-0.5" role="tablist" aria-label="Mode">
+          <div className="pill flex p-0.5" role="tablist" aria-label="Режим">
             {(["live", "history"] as const).map((m) => (
               <button
                 key={m}
@@ -152,26 +155,26 @@ export function WorkersView() {
                 className={clsx("flex h-8 items-center gap-2 rounded-lg px-4 text-[13px] transition-colors", mode === m ? "bg-panel-3 text-fg" : "text-muted hover:text-fg")}
               >
                 {m === "live" && <TelemetryDot state={status?.active ? "running" : status?.worker.online ? "idle" : "offline"} />}
-                {m === "live" ? "Live" : "History"}
+                {m === "live" ? "Вживую" : "История"}
               </button>
             ))}
           </div>
           {mode === "history" && (
             <Select
-              label="Run"
+              label="Запуск"
               value={historyRun}
               onChange={setHistoryRun}
               options={recentRuns.map((r) => ({
                 value: String(r.id),
-                label: `Run #${r.id}, ${new Date(r.startedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}, ${r.status}`,
+                label: `Запуск #${r.id}, ${dateTime(r.startedAt)}, ${RUN_STATUS[r.status] ?? r.status}`,
               }))}
               className="w-72"
             />
           )}
           {run && (
             <p className="font-mono text-xs text-dim">
-              Run #{run.id}, {run.trigger}, {run.processed}/{run.total} games, {run.added} added, {run.updated} updated
-              {run.errors ? `, ${run.errors} errors` : ""}
+              Запуск #{run.id}, {TRIGGER[run.trigger]}, {run.processed}/{count(run.total, ["игра", "игры", "игр"])}, добавлено {run.added}, обновлено {run.updated}
+              {run.errors ? `, ошибок ${run.errors}` : ""}
             </p>
           )}
         </div>
@@ -181,13 +184,13 @@ export function WorkersView() {
             {nodes.length ? (
               <PipelineGraph nodes={nodes} exec={exec} selectedId={selectedId} onSelect={(id) => selectNode(id)} now={now} runLabel={run ? `#${run.id}` : null} />
             ) : (
-              <EmptyState title={view.loading ? "Loading pipeline…" : "No nodes match this search"} className="h-[520px]" />
+              <EmptyState title={view.loading ? "Загружаем конвейер…" : "Под этот поиск шагов нет"} className="h-[520px]" />
             )}
             <p className="pointer-events-none absolute right-3 bottom-3 flex items-center gap-1.5 text-xs text-dim max-lg:hidden">
-              <MousePointerClick className="h-3.5 w-3.5" strokeWidth={1.5} /> Click a step to see its run and edit its rules
+              <MousePointerClick className="h-3.5 w-3.5" strokeWidth={1.5} /> Нажмите на шаг, чтобы увидеть запуск и поменять правила
             </p>
           </div>
-          <aside className="card hidden h-fit space-y-2 p-4 text-[13px] lg:block" aria-label="Legend">
+          <aside className="card hidden h-fit space-y-2 p-4 text-[13px] lg:block" aria-label="Легенда">
             {LEGEND_KINDS.map((t) => {
               const m = NODE_META[t];
               return (
@@ -197,11 +200,11 @@ export function WorkersView() {
                 </p>
               );
             })}
-            <p className="border-t border-line pt-3 text-xs text-dim">Status</p>
+            <p className="border-t border-line pt-3 text-xs text-dim">Статус</p>
             {(["running", "queued", "success", "failed"] as const).map((s) => (
               <p key={s} className="flex items-center gap-2.5 text-muted">
                 <span className="mx-[5px] h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[s].color }} />
-                {{ running: "Running", queued: "Pending", success: "Success", failed: "Failed" }[s]}
+                {{ running: "Работает", queued: "В очереди", success: "Готово", failed: "Ошибка" }[s]}
               </p>
             ))}
           </aside>
@@ -230,15 +233,15 @@ export function WorkersView() {
               right={
                 events.length > 6 && (
                   <button type="button" onClick={() => setShowAllEvents((s) => !s)} className="text-xs text-dim transition-colors hover:text-fg">
-                    {showAllEvents ? "Show less" : "See all"}
+                    {showAllEvents ? "Свернуть" : "Показать все"}
                   </button>
                 )
               }
             >
-              <span id="history-title">Run history</span>
+              <span id="history-title">История запусков</span>
             </CardTitle>
             {events.length === 0 ? (
-              <EmptyState title="No runs yet">Press Run now or wait for the hourly schedule.</EmptyState>
+              <EmptyState title="Запусков ещё не было">Нажмите «Запустить» или дождитесь запуска по расписанию.</EmptyState>
             ) : (
               <ol className="relative mt-4 space-y-4">
                 <span className="absolute top-2 bottom-2 left-[3px] w-px bg-line-2" aria-hidden />
@@ -264,7 +267,7 @@ export function WorkersView() {
             )}
             {recentRuns.length > 0 && (
               <div className="mt-6 border-t border-line pt-4">
-                <p className="mb-2 text-xs text-dim">Recent runs</p>
+                <p className="mb-2 text-xs text-dim">Последние запуски</p>
                 <ul className="space-y-1.5 text-[13px]">
                   {recentRuns.slice(0, 3).map((r) => (
                     <li key={r.id}>
@@ -278,10 +281,10 @@ export function WorkersView() {
                       >
                         <span className="flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[r.status === "running" ? "running" : r.status === "success" ? "success" : "failed"].color }} />
-                          Run #{r.id}, {r.trigger}
+                          Запуск #{r.id}, {TRIGGER[r.trigger]}
                         </span>
                         <span className="font-mono text-xs text-dim">
-                          {r.added} added, {r.updated} updated, {duration((r.finishedAt ?? now) - r.startedAt)}
+                          +{r.added}, обновлено {r.updated}, {duration((r.finishedAt ?? now) - r.startedAt)}
                         </span>
                       </button>
                     </li>

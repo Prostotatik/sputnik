@@ -99,17 +99,17 @@ export function GamesView() {
   return (
     <>
             <TopBar
-        left={<SearchBox value={q} onChange={setQ} placeholder="Search games" />}
+        left={<SearchBox value={q} onChange={setQ} placeholder="Поиск игр" />}
         right={
           <>
             <Select
-              label="Platform"
+              label="Платформа"
               value={platform}
               onChange={(v) => setParam({ platform: v || null })}
-              options={[{ value: "", label: "All platforms" }, ...(platforms.data ?? []).map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
+              options={[{ value: "", label: "Все платформы" }, ...(platforms.data ?? []).map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
               className="w-[170px]"
             />
-            <Select label="Sort" value={sort} onChange={(v) => setParam({ sort: v === DEFAULT_SORT ? null : v })} options={SORT_OPTIONS} className="w-[210px]" />
+            <Select label="Сортировка" value={sort} onChange={(v) => setParam({ sort: v === DEFAULT_SORT ? null : v })} options={SORT_OPTIONS} className="w-[210px]" />
             <RunNowButton />
           </>
         }

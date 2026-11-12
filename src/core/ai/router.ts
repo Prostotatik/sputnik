@@ -97,6 +97,8 @@ export interface RouterOptions {
   now?: () => number;
   /** Max models tried per request. */
   maxAttempts?: number;
+  /** Only these models may be used (e.g. a backfill that must not touch the worker's Gemini quota). */
+  allow?: string[];
 }
 
 /** Routes AI requests across model pools within free-tier limits. */
@@ -112,7 +114,7 @@ export class AiRouter {
 
   async route<T>(req: RouteRequest<T>): Promise<Routed<T>> {
     const candidates = pool(req.capability, { openai: this.opts.openai, preferred: req.preferredModel }).filter(
-      (m) => !req.requireStructured || m.structured,
+      (m) => (!req.requireStructured || m.structured) && (!this.opts.allow || this.opts.allow.includes(m.id)),
     );
     const tried: string[] = [];
     const maxAttempts = this.opts.maxAttempts ?? candidates.length;

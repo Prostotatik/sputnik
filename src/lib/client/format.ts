@@ -1,40 +1,65 @@
+const LOCALE = "ru-RU";
+const pluralRules = new Intl.PluralRules(LOCALE);
+
+/** Russian plural: plural(5, ["игра", "игры", "игр"]) → "игр". */
+export function plural(n: number, [one, few, many]: [string, string, string]): string {
+  const rule = pluralRules.select(n);
+  return rule === "one" ? one : rule === "few" ? few : many;
+}
+
+/** "5 игр", "1 игра". */
+export function count(n: number | null | undefined, forms: [string, string, string]): string {
+  const v = n ?? 0;
+  return `${num(v)} ${plural(v, forms)}`;
+}
+
 export function timeAgo(ts: number | null | undefined, now = Date.now()): string {
   if (!ts) return "—";
   const s = Math.max(0, Math.round((now - ts) / 1000));
-  if (s < 60) return `${s}s ago`;
+  if (s < 60) return `${s} с назад`;
   const m = Math.round(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${m} мин назад`;
   const h = Math.round(m / 60);
-  if (h < 48) return `${h}h ago`;
-  return `${Math.round(h / 24)}d ago`;
+  if (h < 48) return `${h} ч назад`;
+  return `${Math.round(h / 24)} дн. назад`;
 }
 
 export function timeUntil(ts: number | null | undefined, now = Date.now()): string {
   if (!ts) return "—";
   const s = Math.round((ts - now) / 1000);
-  if (s <= 0) return "now";
+  if (s <= 0) return "сейчас";
   const m = Math.ceil(s / 60);
-  if (m < 60) return `in ${m} min`;
-  return `in ${Math.floor(m / 60)}h ${m % 60}m`;
+  if (m < 60) return `через ${m} мин`;
+  return `через ${Math.floor(m / 60)} ч ${m % 60} мин`;
 }
 
-/** "every hour", "every 30 min", "every 2h 30m". */
+/** "каждый час", "каждые 30 мин", "каждые 2 ч 30 мин". */
 export function every(minutes: number | null | undefined): string {
   if (!minutes) return "";
-  if (minutes === 60) return "every hour";
-  if (minutes < 60) return `every ${minutes} min`;
+  if (minutes === 60) return "каждый час";
+  if (minutes < 60) return `каждые ${minutes} мин`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return `every ${h}h${m ? ` ${m}m` : ""}`;
+  return `каждые ${h} ч${m ? ` ${m} мин` : ""}`;
 }
 
-/** Release date as "Nov 10" (this year) or "Nov 10, 2024". Dates are stored as YYYY-MM-DD. */
+/** Release date as "10 нояб." (this year) or "10 нояб. 2024 г.". Dates are stored as YYYY-MM-DD. */
 export function shortDate(iso: string | null | undefined, now = Date.now()): string {
-  if (!iso) return "TBA";
+  if (!iso) return "скоро";
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
-  if (Number.isNaN(d.getTime())) return "TBA";
+  if (Number.isNaN(d.getTime())) return "скоро";
   const sameYear = d.getUTCFullYear() === new Date(now).getUTCFullYear();
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: sameYear ? undefined : "numeric", timeZone: "UTC" });
+  return d.toLocaleDateString(LOCALE, { month: "short", day: "numeric", year: sameYear ? undefined : "numeric", timeZone: "UTC" });
+}
+
+/** Full release date, "10 нояб. 2025 г.". */
+export function longDate(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(LOCALE, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+/** "12 нояб., 14:05". */
+export function dateTime(ts: number): string {
+  return new Date(ts).toLocaleString(LOCALE, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export function duration(ms: number | null | undefined): string {
@@ -43,24 +68,28 @@ export function duration(ms: number | null | undefined): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  if (h) return `${h}h ${m}m`;
-  if (m) return `${m}m ${String(sec).padStart(2, "0")}s`;
-  return `${sec}s`;
+  if (h) return `${h} ч ${m} мин`;
+  if (m) return `${m} мин ${String(sec).padStart(2, "0")} с`;
+  return `${sec} с`;
 }
 
 export function clock(ts: number | null | undefined): string {
   if (!ts) return "—";
-  return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return new Date(ts).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
+}
+
+export function clockSeconds(ts: number): string {
+  return new Date(ts).toLocaleTimeString(LOCALE);
 }
 
 export function compact(n: number | null | undefined): string {
   if (n === null || n === undefined) return "—";
-  return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  return new Intl.NumberFormat(LOCALE, { notation: "compact", maximumFractionDigits: 1 }).format(n);
 }
 
 export function num(n: number | null | undefined): string {
   if (n === null || n === undefined) return "—";
-  return new Intl.NumberFormat("en-US").format(n);
+  return new Intl.NumberFormat(LOCALE).format(n);
 }
 
 export function usd(n: number): string {

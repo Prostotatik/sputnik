@@ -98,7 +98,7 @@ const FlowNode = memo(function FlowNode({ data }: NodeProps<Node<FlowData>>) {
           <p className="truncate text-xs font-medium text-fg">{node.name}</p>
           {isRoot && runLabel && <p className="font-mono text-[11px] text-dim">{runLabel}</p>}
           <p className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-dim">
-            <span style={{ color: st.color }}>{node.enabled ? st.label : "Disabled"}</span>
+            <span style={{ color: st.color }}>{node.enabled ? st.label : "Выключен"}</span>
             {progress && <span>{progress}</span>}
             {ms !== null && !isRoot && <span>{duration(ms)}</span>}
           </p>

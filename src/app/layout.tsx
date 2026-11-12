@@ -8,13 +8,13 @@ const geist = Geist({ variable: "--font-geist", subsets: ["latin", "cyrillic"] }
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
-  title: "Sputnik — game market radar",
-  description: "Hourly Metacritic tracker with AI review summaries, let's-play insights and market analytics.",
+  title: "Sputnik — радар игрового рынка",
+  description: "Каждый час собирает новые игры с Metacritic: ИИ-сводки отзывов, выводы по летсплеям и аналитика рынка.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} h-full`}>
+    <html lang="ru" className={`${geist.variable} ${geistMono.variable} h-full`}>
       <body className="min-h-full">
         <StatusProvider>
           <Sidebar />

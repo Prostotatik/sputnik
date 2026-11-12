@@ -5,15 +5,15 @@ import { Activity, ChartColumnBig, ChartPie, Gamepad2, Loader2, Play, Search } f
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { clock, timeAgo, timeUntil } from "@/lib/client/format";
+import { clock, count, timeAgo, timeUntil } from "@/lib/client/format";
 import { useNow } from "@/lib/client/hooks";
 import { useStatus } from "./status";
 
 const NAV = [
-  { href: "/games", label: "Games", icon: Gamepad2 },
-  { href: "/workers", label: "Workers", icon: Activity },
-  { href: "/analytics", label: "Analytics", icon: ChartPie },
-  { href: "/monitoring", label: "Monitoring", icon: ChartColumnBig },
+  { href: "/games", label: "Игры", icon: Gamepad2 },
+  { href: "/workers", label: "Воркеры", icon: Activity },
+  { href: "/analytics", label: "Аналитика", icon: ChartPie },
+  { href: "/monitoring", label: "Мониторинг", icon: ChartColumnBig },
 ];
 
 const SPUTNIK_ANTENNAS = "M19.8 14.5 L36.5 18 M18.9 16.7 L33.4 25.7 M16.7 18.9 L25.7 33.4 M14.5 19.8 L18 36.5";
@@ -46,13 +46,13 @@ export function TelemetryDot({ state, className }: { state: "running" | "idle" |
 function useWorkerState(): { state: "running" | "idle" | "offline"; label: string; detail: string } {
   const { status, connected } = useStatus();
   const now = useNow(10_000);
-  if (!status) return { state: "offline", label: "Connecting", detail: "Loading service status" };
-  if (!connected) return { state: "offline", label: "Connection lost", detail: "Retrying…" };
-  if (!status.worker.online) return { state: "offline", label: "Worker offline", detail: status.worker.beatAt ? `Last seen ${timeAgo(status.worker.beatAt, now)}` : "Start it with pnpm worker" };
+  if (!status) return { state: "offline", label: "Подключение", detail: "Загружаем статус сервиса" };
+  if (!connected) return { state: "offline", label: "Связь потеряна", detail: "Переподключаемся…" };
+  if (!status.worker.online) return { state: "offline", label: "Воркер не в сети", detail: status.worker.beatAt ? `Был в сети ${timeAgo(status.worker.beatAt, now)}` : "Запустите его: pnpm worker" };
   if (status.active && status.run) {
-    return { state: "running", label: "Collecting", detail: `${status.run.processed} of ${status.run.total} games` };
+    return { state: "running", label: "Идёт сбор", detail: `${status.run.processed} из ${count(status.run.total, ["игры", "игр", "игр"])}` };
   }
-  return { state: "idle", label: "Worker idle", detail: `Next run ${clock(status.worker.nextRunAt)}, ${timeUntil(status.worker.nextRunAt, now)}` };
+  return { state: "idle", label: "Воркер ждёт", detail: `Следующий запуск в ${clock(status.worker.nextRunAt)}, ${timeUntil(status.worker.nextRunAt, now)}` };
 }
 
 export function Sidebar() {
@@ -60,11 +60,11 @@ export function Sidebar() {
   const worker = useWorkerState();
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-deep md:flex">
-      <Link href="/games" className="flex h-16 items-center gap-2.5 px-5 text-fg" aria-label="Sputnik home">
+      <Link href="/games" className="flex h-16 items-center gap-2.5 px-5 text-fg" aria-label="Sputnik, на главную">
         <Logo className="h-6 w-6" />
         <span className="text-base font-medium">Sputnik</span>
       </Link>
-      <nav className="mt-2 flex flex-col gap-0.5 px-3" aria-label="Main">
+      <nav className="mt-2 flex flex-col gap-0.5 px-3" aria-label="Главное меню">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = path.startsWith(href);
           return (
@@ -98,7 +98,7 @@ export function MobileNav() {
   const path = usePathname();
   const worker = useWorkerState();
   return (
-    <nav className="sticky top-0 z-30 flex items-center gap-1 overflow-x-auto border-b border-line bg-deep px-3 py-2 md:hidden" aria-label="Main">
+    <nav className="sticky top-0 z-30 flex items-center gap-1 overflow-x-auto border-b border-line bg-deep px-3 py-2 md:hidden" aria-label="Главное меню">
       {NAV.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
@@ -151,11 +151,11 @@ export function RunNowButton({ className }: { className?: string }) {
         type="button"
         onClick={onClick}
         disabled={pending || active}
-        title={active ? "A run is in progress" : "Start a collection run now"}
+        title={active ? "Запуск уже идёт" : "Запустить сбор прямо сейчас"}
         className="btn-primary flex h-9 items-center gap-2 px-4 text-[13px] font-medium"
       >
         {pending || active ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <Play className="h-4 w-4" strokeWidth={1.5} />}
-        {active ? "Running" : "Run now"}
+        {active ? "Идёт сбор" : "Запустить"}
       </button>
       {message && (
         <p

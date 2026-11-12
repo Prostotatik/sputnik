@@ -44,9 +44,9 @@ export type RequestRunResult = { ok: true; requestId: number } | { ok: false; re
 export function requestRun(db: Db, now = Date.now()): RequestRunResult {
   return db.transaction((tx) => {
     const running = tx.select({ id: runs.id }).from(runs).where(eq(runs.status, "running")).get();
-    if (running) return { ok: false as const, reason: `Run #${running.id} is already in progress` };
+    if (running) return { ok: false as const, reason: `Запуск #${running.id} уже идёт` };
     const pending = tx.select({ id: runRequests.id }).from(runRequests).where(eq(runRequests.status, "pending")).get();
-    if (pending) return { ok: false as const, reason: "A run has already been requested and will start shortly" };
+    if (pending) return { ok: false as const, reason: "Запуск уже запрошен и скоро начнётся" };
     const { id } = tx.insert(runRequests).values({ requestedAt: now, status: "pending" }).returning({ id: runRequests.id }).get();
     return { ok: true as const, requestId: id };
   });

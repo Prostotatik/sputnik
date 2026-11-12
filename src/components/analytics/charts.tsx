@@ -16,9 +16,17 @@ import {
   ZAxis,
 } from "recharts";
 import type { AnalyticsData } from "@/core/analytics";
-import { compact } from "@/lib/client/format";
+import { compact, plural } from "@/lib/client/format";
+import { genreRu } from "@/lib/genres";
 
 const ACCENT = "#4fb6c8";
+
+const QUADRANT_LABEL: Record<AnalyticsData["opportunities"][number]["quadrant"], string> = {
+  opportunity: "Высокий спрос, мало релизов",
+  competitive: "Высокая конкуренция",
+  niche: "Узкая ниша",
+  saturated: "Рынок насыщен",
+};
 /** The leading series takes the accent; the rest step down the neutral ramp. */
 export const SERIES_COLORS = [ACCENT, "#a1a1a6", "#6e6e74", "#4b4b50"];
 
@@ -47,6 +55,7 @@ export function TrendLines({ data }: { data: AnalyticsData["trends"] }) {
               key={s.genre}
               type="monotone"
               dataKey={s.genre}
+              name={genreRu(s.genre)}
               stroke={SERIES_COLORS[i]}
               strokeWidth={i === 0 ? 2 : 1.5}
               dot={false}
@@ -67,7 +76,7 @@ export function SupplyDemand({ data }: { data: AnalyticsData["supplyDemand"] }) 
         <XAxis dataKey="label" {...axis} />
         <YAxis yAxisId="games" {...axis} allowDecimals={false} />
         <YAxis yAxisId="interest" orientation="right" hide />
-        <Tooltip {...tooltipStyle} formatter={(v, n) => [n === "interest" ? `${compact(Number(v))} reviews` : `${v} games`, n === "interest" ? "Player interest" : "Games released"]} />
+        <Tooltip {...tooltipStyle} formatter={(v, n) => [n === "interest" ? `${compact(Number(v))} ${plural(Number(v), ["отзыв", "отзыва", "отзывов"])}` : `${v} ${plural(Number(v), ["игра", "игры", "игр"])}`, n === "interest" ? "Интерес игроков" : "Вышло игр"]} />
         <Bar yAxisId="games" dataKey="games" fill="#3a3a3e" radius={[2, 2, 0, 0]} maxBarSize={20} />
         <Line yAxisId="interest" type="monotone" dataKey="interest" stroke={ACCENT} strokeWidth={2} dot={false} activeDot={{ r: 3, strokeWidth: 0 }} />
       </ComposedChart>
@@ -81,8 +90,8 @@ export function Opportunities({ data }: { data: AnalyticsData["opportunities"] }
     <ResponsiveContainer width="100%" height={180}>
       <ScatterChart margin={{ top: 12, right: 16, left: -16, bottom: 0 }}>
         <CartesianGrid stroke={grid} />
-        <XAxis type="number" dataKey="games" name="Games" {...axis} allowDecimals={false} />
-        <YAxis type="number" dataKey="interest" name="Reviews per game" {...axis} tickFormatter={(v) => compact(v)} />
+        <XAxis type="number" dataKey="games" name="Игры" {...axis} allowDecimals={false} />
+        <YAxis type="number" dataKey="interest" name="Отзывов на игру" {...axis} tickFormatter={(v) => compact(v)} />
         <ZAxis type="number" dataKey="z" range={[60, 360]} />
         <Tooltip
           {...tooltipStyle}
@@ -91,11 +100,11 @@ export function Opportunities({ data }: { data: AnalyticsData["opportunities"] }
             if (!p) return null;
             return (
               <div className="rounded-lg border border-line-2 bg-panel px-3 py-2 text-xs">
-                <p className="font-medium text-fg">{p.genre}</p>
+                <p className="font-medium text-fg">{genreRu(p.genre)}</p>
                 <p className="font-mono text-muted">
-                  {p.games} games, {compact(p.interest)} reviews per game
+                  {p.games} {plural(p.games, ["игра", "игры", "игр"])}, {compact(p.interest)} отзывов на игру
                 </p>
-                <p className="text-muted">{p.quadrant === "opportunity" ? "High demand, low supply" : `${p.quadrant[0].toUpperCase()}${p.quadrant.slice(1)}`}</p>
+                <p className="text-muted">{QUADRANT_LABEL[p.quadrant]}</p>
               </div>
             );
           }}

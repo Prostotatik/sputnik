@@ -21,9 +21,9 @@ export function ScoreBadge({ score, size = "sm", className }: { score: number | 
           : clsx("h-6 min-w-7 rounded-md bg-panel-3 px-1.5 text-xs font-medium", TONE_TEXT[tone]),
         className,
       )}
-      aria-label={score === null ? "No Metascore yet" : `Metascore ${score}`}
+      aria-label={score === null ? "Metascore пока нет" : `Metascore ${score}`}
     >
-      {score ?? "tbd"}
+      {score ?? "—"}
     </span>
   );
 }
@@ -35,12 +35,12 @@ export function UserScoreRing({ score, size = 48 }: { score: number | null; size
   const tone = scoreTone(score, 10);
   const color = { good: "var(--color-score)", mixed: "var(--color-yellow)", bad: "var(--color-bad)", none: "var(--color-dim)" }[tone];
   return (
-    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }} aria-label={score === null ? "No Userscore yet" : `Userscore ${score}`}>
+    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }} aria-label={score === null ? "Userscore пока нет" : `Userscore ${score}`}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
         <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--color-panel-3)" strokeWidth="2" fill="none" />
         <circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth="2" fill="none" strokeDasharray={`${c * pct} ${c}`} strokeLinecap="round" />
       </svg>
-      <span className={clsx("absolute font-mono text-base font-medium tabular-nums", TONE_TEXT[tone])}>{score === null ? "tbd" : score.toFixed(1)}</span>
+      <span className={clsx("absolute font-mono text-base font-medium tabular-nums", TONE_TEXT[tone])}>{score === null ? "—" : score.toFixed(1)}</span>
     </span>
   );
 }
@@ -104,7 +104,7 @@ export function CardTitle({ children, right, className }: { children: ReactNode;
 
 /** A change against the previous period, coloured only by its direction. */
 export function Change({ value, suffix = "", against }: { value: number | null; suffix?: string; against: string }) {
-  if (value === null) return <span className="font-mono text-xs text-dim">no earlier data</span>;
+  if (value === null) return <span className="font-mono text-xs text-dim">нет данных для сравнения</span>;
   const tone = value > 0 ? "text-good" : value < 0 ? "text-bad" : "text-dim";
   return (
     <span className="font-mono text-xs tabular-nums">
@@ -113,7 +113,7 @@ export function Change({ value, suffix = "", against }: { value: number | null; 
         {value}
         {suffix}
       </span>
-      <span className="text-dim"> vs {against}</span>
+      <span className="text-dim"> к {against}</span>
     </span>
   );
 }
@@ -164,7 +164,7 @@ export function Dialog({
               </h2>
               {subtitle && <p className="mt-0.5 text-[13px] text-muted">{subtitle}</p>}
             </div>
-            <button type="button" onClick={onClose} aria-label="Close" className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-panel-3 hover:text-fg">
+            <button type="button" onClick={onClose} aria-label="Закрыть" className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-panel-3 hover:text-fg">
               <X className="h-4 w-4" />
             </button>
           </header>

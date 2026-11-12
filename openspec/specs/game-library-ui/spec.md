@@ -66,3 +66,10 @@ The Games tab SHALL show a live Service Monitor strip with current run progress,
 #### Scenario: Live progress
 - **WHEN** a run is processing game 12 of 20
 - **THEN** the strip shows 60% progress and the current step without a page reload
+
+### Requirement: Russian interface
+The whole interface SHALL be in Russian: navigation, labels, empty states, errors, dates and numbers (ru-RU, with Russian plural forms). Genre names SHALL be shown in Russian while the database keeps the Metacritic names. Game titles, developers and platform names SHALL stay as on Metacritic.
+
+#### Scenario: Russian card
+- **WHEN** the user opens a game card
+- **THEN** headings, review summaries, the let's-play verdict and the description (when a translation exists) are in Russian

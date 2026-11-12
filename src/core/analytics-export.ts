@@ -1,4 +1,5 @@
 import type { AnalyticsData } from "./analytics";
+import { genreRu } from "@/lib/genres";
 
 function csvCell(v: unknown): string {
   let s = v === null || v === undefined ? "" : String(v);
@@ -7,17 +8,20 @@ function csvCell(v: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+const QUADRANT = { opportunity: "высокий спрос, мало релизов", competitive: "высокая конкуренция", niche: "узкая ниша", saturated: "рынок насыщен" } as const;
+const INSIGHT = { up: "рост", down: "спад", opportunity: "ниша" } as const;
+
 export function toCsv(a: AnalyticsData): string {
-  const rows: unknown[][] = [["section", "name", "metric", "value"]];
+  const rows: unknown[][] = [["раздел", "название", "метрика", "значение"]];
   const k = a.kpis;
-  rows.push(["kpi", "Total games", "value", k.totalGames.value], ["kpi", "Total games", "delta", k.totalGames.delta]);
-  rows.push(["kpi", "Average Metascore", "value", k.avgMetascore.value], ["kpi", "Average Userscore", "value", k.avgUserscore.value]);
-  rows.push(["kpi", "Trending genre", k.trendingGenre.name, k.trendingGenre.growth]);
-  for (const g of a.genreShare) rows.push(["genre_share", g.genre, "share_pct", g.share], ["genre_share", g.genre, "games", g.count]);
-  for (const s of a.supplyDemand) rows.push(["supply_demand", s.label, "games", s.games], ["supply_demand", s.label, "interest", s.interest]);
-  for (const o of a.opportunities) rows.push(["opportunity", o.genre, o.quadrant, `${o.games} games / ${o.interest} reviews per game`]);
-  for (const p of a.combinations.pairs) rows.push(["combination", `${p.genre} + ${p.platform}`, "share_pct", p.share]);
-  for (const t of a.topGames) rows.push(["top_game", t.title, "user_reviews", t.userReviews]);
-  for (const i of a.insights?.items ?? []) rows.push(["insight", i.kind, "text", i.text]);
+  rows.push(["показатели", "Игр в выборке", "значение", k.totalGames.value], ["показатели", "Игр в выборке", "изменение", k.totalGames.delta]);
+  rows.push(["показатели", "Средний Metascore", "значение", k.avgMetascore.value], ["показатели", "Средний Userscore", "значение", k.avgUserscore.value]);
+  rows.push(["показатели", "Растущий жанр", k.trendingGenre.name ? genreRu(k.trendingGenre.name) : "", k.trendingGenre.growth]);
+  for (const g of a.genreShare) rows.push(["доля жанров", genreRu(g.genre), "доля, %", g.share], ["доля жанров", genreRu(g.genre), "игр", g.count]);
+  for (const s of a.supplyDemand) rows.push(["предложение и спрос", s.label, "игр", s.games], ["предложение и спрос", s.label, "отзывов", s.interest]);
+  for (const o of a.opportunities) rows.push(["ниши", genreRu(o.genre), QUADRANT[o.quadrant], `${o.games} игр / ${o.interest} отзывов на игру`]);
+  for (const p of a.combinations.pairs) rows.push(["сочетания", `${genreRu(p.genre)} + ${p.platform}`, "доля, %", p.share]);
+  for (const t of a.topGames) rows.push(["топ игр", t.title, "отзывов игроков", t.userReviews]);
+  for (const i of a.insights?.items ?? []) rows.push(["инсайт", INSIGHT[i.kind], "текст", i.text]);
   return rows.map((r) => r.map(csvCell).join(",")).join("\n");
 }

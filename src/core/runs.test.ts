@@ -49,7 +49,7 @@ describe("runs", () => {
     const requestId = takePendingRequest(db);
     expect(requestId).not.toBeNull();
     RunTracker.start(db, "manual", "2026-11-08", [], requestId);
-    expect(requestRun(db)).toMatchObject({ ok: false, reason: expect.stringContaining("already in progress") });
+    expect(requestRun(db)).toMatchObject({ ok: false, reason: expect.stringContaining("уже идёт") });
   });
 
   it("recovers stale running runs on worker start", () => {

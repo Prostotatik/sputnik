@@ -91,6 +91,14 @@ describe("AiRouter", () => {
     expect(res.model).toBe("text-embedding-3-small");
   });
 
+  it("never leaves the allow-list", async () => {
+    const router = new AiRouter(db, { openai: false, now, allow: ["gemma-4-31b-it"] });
+    const fail = () => Promise.reject(new AiCallError("busy", "overloaded"));
+    expect((await router.route({ capability: "text", purpose: "t", estimatedTokens: 10, call: ok })).model).toBe("gemma-4-31b-it");
+    await expect(router.route({ capability: "text", purpose: "t", estimatedTokens: 10, call: fail })).rejects.toBeInstanceOf(QuotaExhaustedError);
+    expect(new Set(db.select().from(aiCalls).all().map((c) => c.model))).toEqual(new Set(["gemma-4-31b-it"]));
+  });
+
   it("redacts API keys from error text", () => {
     expect(redactSecrets("bad AIzaSyA1234567890abcdefghijk key ?key=abc&x=1")).toBe("bad [redacted] key ?key=[redacted]&x=1");
   });

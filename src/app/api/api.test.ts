@@ -39,7 +39,7 @@ describe("API", () => {
     expect((await runs.POST()).status).toBe(202);
     const second = await runs.POST();
     expect(second.status).toBe(409);
-    expect(await second.json()).toMatchObject({ error: expect.stringContaining("already") });
+    expect(await second.json()).toMatchObject({ error: expect.stringContaining("уже") });
   });
 
   it("filters games by title and platform and sorts unscored last", async () => {
@@ -103,8 +103,8 @@ describe("API", () => {
     const res = exportRoute.GET(new Request("http://x/api/analytics/export?days=30"));
     expect(res.headers.get("Content-Type")).toContain("text/csv");
     const text = await res.text();
-    expect(text.split("\n")[0]).toBe("section,name,metric,value");
-    expect(text).toContain("genre_share,Action,games,3");
+    expect(text.replace(/^﻿/, "").split("\n")[0]).toBe("раздел,название,метрика,значение");
+    expect(text).toContain("доля жанров,Экшен,игр,3");
   });
 });
 
@@ -115,6 +115,6 @@ describe("CSV export safety", async () => {
     const data = computeAnalytics(getDb(), { days: 30 });
     data.topGames = [{ slug: "x", title: "=HYPERLINK(\"http://evil\")", coverUrl: null, userReviews: -1, userscore: null, metascore: null, interestShare: 0 }];
     const csv = toCsv(data);
-    expect(csv).toContain(`top_game,"'=HYPERLINK(""http://evil"")",user_reviews,-1`);
+    expect(csv).toContain(`топ игр,"'=HYPERLINK(""http://evil"")",отзывов игроков,-1`);
   });
 });

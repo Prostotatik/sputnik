@@ -14,26 +14,26 @@ import {
 import type { NodeStatus } from "@/lib/db/schema";
 
 export const NODE_META: Record<string, { icon: LucideIcon; color: string; tile: string; kind: string; agent: string }> = {
-  sync: { icon: Layers, color: "#a1a1a6", tile: "#232325", kind: "Schedule", agent: "Scheduler" },
-  fetch_games: { icon: Globe, color: "#a1a1a6", tile: "#232325", kind: "Metacritic crawl", agent: "Web Agent" },
-  parse_game: { icon: FileText, color: "#a1a1a6", tile: "#232325", kind: "Metacritic data", agent: "Metacritic API" },
-  similar: { icon: Search, color: "#a1a1a6", tile: "#232325", kind: "Similarity", agent: "Embeddings" },
-  critic_summary: { icon: Star, color: "#a1a1a6", tile: "#232325", kind: "AI summary", agent: "Review Agent" },
-  user_summary: { icon: MessagesSquare, color: "#a1a1a6", tile: "#232325", kind: "AI summary", agent: "Review Agent" },
-  youtube_search: { icon: Search, color: "#a1a1a6", tile: "#232325", kind: "YouTube search", agent: "YouTube Search" },
-  transcribe: { icon: AudioLines, color: "#a1a1a6", tile: "#232325", kind: "Speech-to-text", agent: "Speech-to-text" },
-  letsplay_summary: { icon: Sparkles, color: "#a1a1a6", tile: "#232325", kind: "AI verdict", agent: "Insight Agent" },
-  insights: { icon: ChartColumnIncreasing, color: "#a1a1a6", tile: "#232325", kind: "Market insights", agent: "Analyst Agent" },
-  custom_prompt: { icon: Wand2, color: "#a1a1a6", tile: "#232325", kind: "Custom rule", agent: "Prompt Agent" },
+  sync: { icon: Layers, color: "#a1a1a6", tile: "#232325", kind: "Расписание", agent: "Планировщик" },
+  fetch_games: { icon: Globe, color: "#a1a1a6", tile: "#232325", kind: "Обход Metacritic", agent: "Веб-агент" },
+  parse_game: { icon: FileText, color: "#a1a1a6", tile: "#232325", kind: "Данные Metacritic", agent: "Metacritic API" },
+  similar: { icon: Search, color: "#a1a1a6", tile: "#232325", kind: "Похожесть", agent: "Эмбеддинги" },
+  critic_summary: { icon: Star, color: "#a1a1a6", tile: "#232325", kind: "ИИ-сводка", agent: "Агент отзывов" },
+  user_summary: { icon: MessagesSquare, color: "#a1a1a6", tile: "#232325", kind: "ИИ-сводка", agent: "Агент отзывов" },
+  youtube_search: { icon: Search, color: "#a1a1a6", tile: "#232325", kind: "Поиск на YouTube", agent: "Поиск YouTube" },
+  transcribe: { icon: AudioLines, color: "#a1a1a6", tile: "#232325", kind: "Речь в текст", agent: "Распознавание речи" },
+  letsplay_summary: { icon: Sparkles, color: "#a1a1a6", tile: "#232325", kind: "ИИ-вердикт", agent: "Агент выводов" },
+  insights: { icon: ChartColumnIncreasing, color: "#a1a1a6", tile: "#232325", kind: "Инсайты рынка", agent: "Агент-аналитик" },
+  custom_prompt: { icon: Wand2, color: "#a1a1a6", tile: "#232325", kind: "Своё правило", agent: "Агент промптов" },
 };
 
 export const STATUS_META: Record<NodeStatus | "idle", { label: string; color: string }> = {
-  idle: { label: "Idle", color: "#85858b" },
-  queued: { label: "Queued", color: "#85858b" },
-  running: { label: "Running", color: "#4fb6c8" },
-  success: { label: "Done", color: "#4cc38a" },
-  failed: { label: "Failed", color: "#e5484d" },
-  skipped: { label: "Skipped", color: "#5c5c62" },
+  idle: { label: "Ожидает", color: "#85858b" },
+  queued: { label: "В очереди", color: "#85858b" },
+  running: { label: "Работает", color: "#4fb6c8" },
+  success: { label: "Готово", color: "#4cc38a" },
+  failed: { label: "Ошибка", color: "#e5484d" },
+  skipped: { label: "Пропущен", color: "#5c5c62" },
 };
 
 export function YoutubeGlyph({ className }: { className?: string }) {

@@ -4,7 +4,8 @@ import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { GameListItem } from "@/core/queries";
-import { num, shortDate, timeAgo } from "@/lib/client/format";
+import { count, num, shortDate, timeAgo } from "@/lib/client/format";
+import { genreRu } from "@/lib/genres";
 import { useJson } from "@/lib/client/hooks";
 import { EmptyState, SearchBox } from "../shell";
 import { Dialog, PlatformBadges, ScoreBadge, Select, Skeleton } from "../ui";
@@ -61,23 +62,23 @@ export function LibraryDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Game library"
-      subtitle={`${num(total)} games${filters.platform ? ` on ${filters.platform}` : ""}${debouncedQ ? ` matching “${debouncedQ}”` : ""}`}
+      title="Библиотека игр"
+      subtitle={`${count(total, ["игра", "игры", "игр"])}${filters.platform ? ` на ${filters.platform}` : ""}${debouncedQ ? ` по запросу «${debouncedQ}»` : ""}`}
       className="sm:h-[calc(100dvh-48px)]"
       footer={
         <div className="flex w-full items-center justify-between gap-3">
           <span className="font-mono text-xs text-dim tabular-nums">
-            {total ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} of ${num(total)}` : "0 games"}
+            {total ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} из ${num(total)}` : "0 игр"}
           </span>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setPage((p) => p - 1)} disabled={page === 0} className="btn-secondary flex h-8 items-center gap-1 px-2.5 text-[13px] disabled:opacity-40">
-              <ChevronLeft className="h-4 w-4" /> Prev
+              <ChevronLeft className="h-4 w-4" /> Назад
             </button>
             <span className="font-mono text-xs text-muted tabular-nums">
               {page + 1} / {pages}
             </span>
             <button type="button" onClick={() => setPage((p) => p + 1)} disabled={page + 1 >= pages} className="btn-secondary flex h-8 items-center gap-1 px-2.5 text-[13px] disabled:opacity-40">
-              Next <ChevronRight className="h-4 w-4" />
+              Дальше <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -85,26 +86,26 @@ export function LibraryDialog({
     >
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-48 flex-1">
-          <SearchBox value={filters.q} onChange={(q) => patch({ q })} placeholder="Search the library" />
+          <SearchBox value={filters.q} onChange={(q) => patch({ q })} placeholder="Поиск по библиотеке" />
         </div>
         <Select
-          label="Platform"
+          label="Платформа"
           value={filters.platform}
           onChange={(platform) => patch({ platform })}
-          options={[{ value: "", label: "All platforms" }, ...platforms.map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
+          options={[{ value: "", label: "Все платформы" }, ...platforms.map((p) => ({ value: p.name, label: `${p.name} (${p.count})` }))]}
           className="w-[190px] max-sm:flex-1"
         />
-        <Select label="Sort" value={filters.sort} onChange={(sort) => patch({ sort })} options={SORT_OPTIONS} className="w-[190px] max-sm:flex-1" />
+        <Select label="Сортировка" value={filters.sort} onChange={(sort) => patch({ sort })} options={SORT_OPTIONS} className="w-[190px] max-sm:flex-1" />
       </div>
 
       <div className="mt-4 hidden grid-cols-[44px_1fr_150px_92px_56px_56px_72px] gap-3 px-2 pb-2 text-[11px] text-dim md:grid" aria-hidden>
         <span />
-        <span>Game</span>
-        <span>Platforms</span>
-        <span>Released</span>
+        <span>Игра</span>
+        <span>Платформы</span>
+        <span>Релиз</span>
         <span className="text-center">Meta</span>
         <span className="text-center">User</span>
-        <span className="text-right">Updated</span>
+        <span className="text-right">Обновлено</span>
       </div>
       {list.loading && items.length === 0 ? (
         <div className="space-y-1.5">
@@ -113,7 +114,7 @@ export function LibraryDialog({
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState title="No games match these filters">Clear the search or pick another platform.</EmptyState>
+        <EmptyState title="Под эти фильтры игр нет">Очистите поиск или выберите другую платформу.</EmptyState>
       ) : (
         <ul className={clsx("space-y-0.5 transition-opacity", list.loading && "opacity-60")}>
           {items.map((g) => (
@@ -137,7 +138,7 @@ export function LibraryDialog({
                   <span className="line-clamp-1 text-[13px] text-fg" title={g.title}>
                     {g.title}
                   </span>
-                  <span className="mt-0.5 block truncate text-xs text-dim">{g.genres.slice(0, 2).join(", ") || "Genre unknown"}</span>
+                  <span className="mt-0.5 block truncate text-xs text-dim">{g.genres.slice(0, 2).map(genreRu).join(", ") || "Жанр не указан"}</span>
                   <span className="mt-1 block font-mono text-[11px] text-dim md:hidden">
                     {shortDate(g.releaseDate)} · {g.platforms.slice(0, 3).join(", ")}
                   </span>
@@ -149,7 +150,7 @@ export function LibraryDialog({
                 <span className="flex justify-center">
                   <ScoreBadge score={g.metascore} />
                 </span>
-                <span className="hidden text-center font-mono text-xs text-muted tabular-nums md:block">{g.userscore === null ? "tbd" : g.userscore.toFixed(1)}</span>
+                <span className="hidden text-center font-mono text-xs text-muted tabular-nums md:block">{g.userscore === null ? "—" : g.userscore.toFixed(1)}</span>
                 <span className="hidden text-right font-mono text-xs text-dim md:block">{timeAgo(g.updatedAt)}</span>
               </button>
             </li>

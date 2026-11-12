@@ -80,3 +80,14 @@ Every run SHALL record trigger, start/end time, status, games added, games updat
 #### Scenario: Completed run summary
 - **WHEN** a run finishes
 - **THEN** its record shows status `success` or `failed`, duration, and added/updated counts
+
+### Requirement: Russian content
+AI-generated content (review summaries, let's-play verdicts, market insights, custom fields) SHALL be produced in Russian by the default prompts. Each game description SHALL be translated into Russian once and stored next to the original; the original stays for sync and similarity, and a changed original SHALL be translated again. A failed translation SHALL NOT fail the game: the card shows the original.
+
+#### Scenario: New game
+- **WHEN** a run adds a game with an English description
+- **THEN** the game gets a Russian description and the original is kept unchanged
+
+#### Scenario: Stored English defaults
+- **WHEN** the service starts with pipeline rules that still hold the old English default texts
+- **THEN** those rules switch to the Russian defaults, and rules the user edited stay as they are

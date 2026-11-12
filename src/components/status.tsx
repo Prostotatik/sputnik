@@ -12,7 +12,7 @@ interface StatusContextValue {
 const StatusContext = createContext<StatusContextValue>({
   status: null,
   connected: false,
-  runNow: async () => ({ ok: false, message: "Not ready" }),
+  runNow: async () => ({ ok: false, message: "Ещё загружается" }),
 });
 
 /** Poll /api/status when the stream has delivered nothing fresh for this long. */
@@ -89,8 +89,8 @@ export function StatusProvider({ children }: { children: ReactNode }) {
   const runNow = useCallback(async () => {
     const res = await fetch("/api/runs", { method: "POST" });
     const body = await res.json().catch(() => ({}));
-    if (res.ok) return { ok: true, message: "Run requested. The worker starts it within a few seconds." };
-    return { ok: false, message: body.error ?? `Could not start a run (${res.status})` };
+    if (res.ok) return { ok: true, message: "Запуск запрошен. Воркер начнёт его через несколько секунд." };
+    return { ok: false, message: body.error ?? `Не удалось начать запуск (${res.status})` };
   }, []);
 
   return <StatusContext.Provider value={{ status, connected, runNow }}>{children}</StatusContext.Provider>;

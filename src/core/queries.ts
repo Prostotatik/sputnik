@@ -233,7 +233,7 @@ export function monitoringView(db: Db, now = Date.now()) {
     const from = startOfToday - (13 - i) * DAY;
     const rows = calls.filter((c) => c.ts >= from && c.ts < from + DAY);
     return {
-      day: new Date(from).toISOString().slice(5, 10),
+      day: `${new Date(from).toISOString().slice(8, 10)}.${new Date(from).toISOString().slice(5, 7)}`,
       requests: rows.length,
       tokens: sum(rows, (c) => c.inputTokens + c.outputTokens),
       cost: sum(rows, (c) => c.costUsd),

@@ -16,7 +16,8 @@ export function GET(req: Request) {
       headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="sputnik-analytics-${stamp}.json"` },
     });
   }
-  return new Response(toCsv(data), {
+  // The BOM makes Excel read the Cyrillic text as UTF-8.
+  return new Response(`﻿${toCsv(data)}`, {
     headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="sputnik-analytics-${stamp}.csv"` },
   });
 }

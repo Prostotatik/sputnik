@@ -4,7 +4,8 @@ import clsx from "clsx";
 import { ArrowLeft, ArrowUpRight, ExternalLink, Play } from "lucide-react";
 import { useState } from "react";
 import type { GameDetailData } from "@/core/queries";
-import { compact, timeAgo } from "@/lib/client/format";
+import { compact, longDate, plural, timeAgo } from "@/lib/client/format";
+import { genreRu } from "@/lib/genres";
 import { realPoints } from "@/lib/opinions";
 import { EmptyState } from "../shell";
 import { CardTitle, PlatformBadges, ScoreBadge, Skeleton, UserScoreRing } from "../ui";
@@ -39,14 +40,14 @@ function OpinionCard({ title, items, tone, summary, emptyText }: { title: string
         {title}
         {items.length > 3 && (
           <button type="button" onClick={() => setOpen((o) => !o)} className="ml-auto font-mono text-xs font-normal text-dim transition-colors hover:text-fg" aria-expanded={open}>
-            {open ? "Show less" : `+${items.length - 3} more`}
+            {open ? "Свернуть" : `ещё ${items.length - 3}`}
           </button>
         )}
       </h3>
       {summary === null ? (
         <p className="text-[13px] text-dim">{emptyText}</p>
       ) : items.length === 0 ? (
-        <p className="text-[13px] text-dim">Nothing notable mentioned</p>
+        <p className="text-[13px] text-dim">Ничего заметного не упомянуто</p>
       ) : (
         <ul className="space-y-2">
           {shown.map((t) => (
@@ -66,7 +67,7 @@ function OpinionCard({ title, items, tone, summary, emptyText }: { title: string
 export function GameDetail({ data, loading, onBack }: { data: GameDetailData | null; loading: boolean; onBack: () => void }) {
   const [expanded, setExpanded] = useState(false);
   if (!data) {
-    return loading ? <Skeleton className="h-[640px] w-full rounded-2xl" /> : <EmptyState title="Select a game" className="card h-[480px]">Pick a game from the list to see its scores, review summaries and let&apos;s-play insight.</EmptyState>;
+    return loading ? <Skeleton className="h-[640px] w-full rounded-2xl" /> : <EmptyState title="Выберите игру" className="card h-[480px]">Выберите игру в списке, чтобы увидеть оценки, сводки отзывов и вывод по летсплею.</EmptyState>;
   }
   const { game, platforms, critic, user, insight } = data;
   const platformNames = platforms.map((p) => p.name);
@@ -81,7 +82,7 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
 
         <div className="relative px-6 pt-5 pb-6 md:px-8">
           <button type="button" onClick={onBack} className="flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-fg lg:pointer-events-none lg:opacity-0">
-            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /> Back to list
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /> К списку
           </button>
           <div className="mt-[clamp(28px,6.5vw,96px)] max-w-150">
             <h1 id="game-title" className="line-clamp-2 text-[clamp(32px,4vw,48px)] leading-[1.05] font-medium tracking-[-0.02em]">
@@ -95,23 +96,23 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
                 <ScoreBadge score={game.metascore} size="lg" />
                 <div className="text-sm leading-5">
                   <p>Metascore</p>
-                  <p className="font-mono text-xs text-dim">{game.criticReviewCount ? `${compact(game.criticReviewCount)} critics` : "out of 100"}</p>
+                  <p className="font-mono text-xs text-dim">{game.criticReviewCount ? `${compact(game.criticReviewCount)} ${plural(game.criticReviewCount, ["критик", "критика", "критиков"])}` : "из 100"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <UserScoreRing score={game.userscore} />
                 <div className="text-sm leading-5">
                   <p>Userscore</p>
-                  <p className="font-mono text-xs text-dim">{game.userReviewCount ? `${compact(game.userReviewCount)} ratings` : "out of 10"}</p>
+                  <p className="font-mono text-xs text-dim">{game.userReviewCount ? `${compact(game.userReviewCount)} ${plural(game.userReviewCount, ["оценка", "оценки", "оценок"])}` : "из 10"}</p>
                 </div>
               </div>
             </div>
             <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-              <span className="text-fg">{game.developer ?? "Unknown developer"}</span>
-              {game.genres.length > 0 && <span>{game.genres.join(", ")}</span>}
+              <span className="text-fg">{game.developer ?? "Разработчик неизвестен"}</span>
+              {game.genres.length > 0 && <span>{game.genres.map(genreRu).join(", ")}</span>}
               {game.releaseDate && (
                 <span className="font-mono text-xs text-dim">
-                  {new Date(`${game.releaseDate}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })}
+                  {longDate(game.releaseDate)}
                 </span>
               )}
               <a href={game.metacriticUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-xs text-dim transition-colors hover:text-fg">
@@ -123,12 +124,12 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
                 <p className={clsx("whitespace-pre-line text-sm leading-[22px] text-muted", !expanded && "line-clamp-4")}>{game.description}</p>
                 {game.description.length > 240 && (
                   <button type="button" onClick={() => setExpanded((e) => !e)} className="mt-1 text-xs text-fg underline-offset-2 hover:underline">
-                    {expanded ? "Show less" : "Read more"}
+                    {expanded ? "Свернуть" : "Читать полностью"}
                   </button>
                 )}
               </div>
             ) : (
-              <p className="mt-3 text-sm text-muted">Metacritic has no description for this game yet.</p>
+              <p className="mt-3 text-sm text-muted">У Metacritic пока нет описания этой игры.</p>
             )}
           </div>
 
@@ -137,20 +138,20 @@ export function GameDetail({ data, loading, onBack }: { data: GameDetailData | n
               href={game.videoUrl ?? insight!.videoUrl}
               target="_blank"
               rel="noreferrer"
-              title={game.videoUrl ? (game.videoTitle ?? "Watch video") : insight!.videoTitle}
+              title={game.videoUrl ? (game.videoTitle ?? "Смотреть видео") : insight!.videoTitle}
               className="btn-secondary mt-5 inline-flex h-10 items-center gap-2 px-4 text-[13px] md:absolute md:top-1/2 md:right-6 md:mt-0"
             >
-              <Play className="h-4 w-4" strokeWidth={1.5} /> {game.videoUrl ? "Watch trailer" : "Watch let's-play"} <ExternalLink className="h-4 w-4 text-dim" strokeWidth={1.5} />
+              <Play className="h-4 w-4" strokeWidth={1.5} /> {game.videoUrl ? "Смотреть трейлер" : "Смотреть летсплей"} <ExternalLink className="h-4 w-4 text-dim" strokeWidth={1.5} />
             </a>
           )}
         </div>
       </div>
 
       <div className="relative mt-3 grid gap-3 md:grid-cols-2">
-        <OpinionCard title="What critics like" items={realPoints(critic?.likes ?? [])} tone="like" summary={critic} emptyText="No critic reviews yet" />
-        <OpinionCard title="What critics dislike" items={realPoints(critic?.dislikes ?? [])} tone="dislike" summary={critic} emptyText="No critic reviews yet" />
-        <OpinionCard title="What players like" items={realPoints(user?.likes ?? [])} tone="like" summary={user} emptyText="No player reviews yet" />
-        <OpinionCard title="What players dislike" items={realPoints(user?.dislikes ?? [])} tone="dislike" summary={user} emptyText="No player reviews yet" />
+        <OpinionCard title="Что нравится критикам" items={realPoints(critic?.likes ?? [])} tone="like" summary={critic} emptyText="Рецензий критиков пока нет" />
+        <OpinionCard title="Что не нравится критикам" items={realPoints(critic?.dislikes ?? [])} tone="dislike" summary={critic} emptyText="Рецензий критиков пока нет" />
+        <OpinionCard title="Что нравится игрокам" items={realPoints(user?.likes ?? [])} tone="like" summary={user} emptyText="Отзывов игроков пока нет" />
+        <OpinionCard title="Что не нравится игрокам" items={realPoints(user?.dislikes ?? [])} tone="dislike" summary={user} emptyText="Отзывов игроков пока нет" />
       </div>
     </article>
   );
@@ -162,22 +163,22 @@ export function GameExtras({ data }: { data: GameDetailData }) {
   return (
     <details className="card group px-5 py-4">
       <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
-        Verdicts, scores by platform{customFields.length ? ", custom fields" : ""} and transcript
-        <span className="text-xs font-normal text-dim group-open:hidden">Show</span>
-        <span className="hidden text-xs font-normal text-dim group-open:inline">Hide</span>
+        Вердикты, оценки по платформам{customFields.length ? ", свои поля" : ""} и расшифровка
+        <span className="text-xs font-normal text-dim group-open:hidden">Показать</span>
+        <span className="hidden text-xs font-normal text-dim group-open:inline">Скрыть</span>
       </summary>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        {critic?.verdict && <Verdict label="Critics' verdict" text={critic.verdict} meta={`${compact(critic.reviewCount)} reviews, ${timeAgo(critic.updatedAt)}`} />}
-        {user?.verdict && <Verdict label="Players' verdict" text={user.verdict} meta={`${compact(user.reviewCount)} ratings, ${timeAgo(user.updatedAt)}`} />}
+        {critic?.verdict && <Verdict label="Вердикт критиков" text={critic.verdict} meta={`${compact(critic.reviewCount)} ${plural(critic.reviewCount, ["рецензия", "рецензии", "рецензий"])}, ${timeAgo(critic.updatedAt)}`} />}
+        {user?.verdict && <Verdict label="Вердикт игроков" text={user.verdict} meta={`${compact(user.reviewCount)} ${plural(user.reviewCount, ["оценка", "оценки", "оценок"])}, ${timeAgo(user.updatedAt)}`} />}
         {customFields.map((f) => (
-          <Verdict key={f.key} label={f.label} text={f.value} meta={`Custom rule, ${timeAgo(f.updatedAt)}`} />
+          <Verdict key={f.key} label={f.label} text={f.value} meta={`Своё правило, ${timeAgo(f.updatedAt)}`} />
         ))}
         <div className="card overflow-x-auto p-5">
-          <p className="text-[13px] font-medium">Scores by platform</p>
-          <table className="mt-3 w-full text-left text-[13px]" aria-label="Scores by platform">
+          <p className="text-[13px] font-medium">Оценки по платформам</p>
+          <table className="mt-3 w-full text-left text-[13px]" aria-label="Оценки по платформам">
             <thead className="text-xs text-dim">
               <tr>
-                <th className="pb-1.5 font-normal">Platform</th>
+                <th className="pb-1.5 font-normal">Платформа</th>
                 <th className="pb-1.5 font-normal">Metascore</th>
                 <th className="pb-1.5 font-normal">Userscore</th>
               </tr>
@@ -186,8 +187,8 @@ export function GameExtras({ data }: { data: GameDetailData }) {
               {platforms.map((p) => (
                 <tr key={p.slug} className="border-t border-line">
                   <td className="py-1.5">{p.name}</td>
-                  <td className="py-1.5 font-mono tabular-nums">{p.metascore ?? "tbd"}</td>
-                  <td className="py-1.5 font-mono tabular-nums">{p.userscore ?? "tbd"}</td>
+                  <td className="py-1.5 font-mono tabular-nums">{p.metascore ?? "—"}</td>
+                  <td className="py-1.5 font-mono tabular-nums">{p.userscore ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -195,9 +196,9 @@ export function GameExtras({ data }: { data: GameDetailData }) {
         </div>
         {insight && (
           <div className="card p-5">
-            <p className="text-[13px] font-medium">Let&apos;s-play transcript excerpt</p>
+            <p className="text-[13px] font-medium">Фрагмент расшифровки летсплея</p>
             <p className="mt-1 font-mono text-xs text-dim">
-              {insight.channel ?? "Unknown channel"}, {compact(insight.views)} views, {insight.videoTitle}
+              {insight.channel ?? "Неизвестный канал"}, {compact(insight.views)} {plural(insight.views ?? 0, ["просмотр", "просмотра", "просмотров"])}, {insight.videoTitle}
             </p>
             {insight.highlights.length > 0 && (
               <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -236,15 +237,15 @@ export function SimilarGames({ items, onSelect }: { items: GameDetailData["simil
         right={
           items.length > 4 && (
             <button type="button" onClick={() => setAll((a) => !a)} className="text-xs text-dim transition-colors hover:text-fg">
-              {all ? "Show less" : "See all"}
+              {all ? "Свернуть" : "Показать все"}
             </button>
           )
         }
       >
-        <span id="similar-title">Similar games</span>
+        <span id="similar-title">Похожие игры</span>
       </CardTitle>
       {items.length === 0 ? (
-        <EmptyState title="No similar games yet">Similar titles appear as the library grows.</EmptyState>
+        <EmptyState title="Похожих игр пока нет">Они появятся, когда библиотека подрастёт.</EmptyState>
       ) : (
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {shown.map((s) => (
@@ -278,14 +279,14 @@ export function YoutubeInsight({ insight }: { insight: GameDetailData["insight"]
           <svg viewBox="0 0 28 20" className="h-4 w-[22px]" aria-hidden>
             <rect width="28" height="20" rx="5" fill="#ff0033" />
             <path d="M11 6l7 4-7 4z" fill="white" />
-          </svg> YouTube insight
+          </svg> Вывод по YouTube
         </span>
       </CardTitle>
       {!insight ? (
-        <EmptyState title="No let's-play analysed yet">The worker looks for a popular commentated let&apos;s-play once the game has reviews.</EmptyState>
+        <EmptyState title="Летсплей ещё не разобран">Когда у игры появятся отзывы, воркер найдёт популярный летсплей с комментариями.</EmptyState>
       ) : (
         <div className="grid grid-cols-[140px_1fr] gap-3.5">
-          <a href={insight.videoUrl} target="_blank" rel="noreferrer" className="group relative block h-[118px] overflow-hidden rounded-lg" aria-label={`Watch ${insight.videoTitle}`}>
+          <a href={insight.videoUrl} target="_blank" rel="noreferrer" className="group relative block h-[118px] overflow-hidden rounded-lg" aria-label={`Смотреть ${insight.videoTitle}`}>
             <HeroImage urls={[`https://i.ytimg.com/vi/${insight.videoId}/hqdefault.jpg`]} className="h-full w-full object-cover" />
             <span className="absolute inset-0 flex items-center justify-center bg-black/25">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg/80 transition-colors group-hover:bg-bg">
@@ -298,7 +299,7 @@ export function YoutubeInsight({ insight }: { insight: GameDetailData["insight"]
               {insight.conclusion}
             </p>
             <a href={insight.videoUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[13px] text-fg underline-offset-2 hover:underline">
-              Watch full video <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+              Смотреть видео целиком <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
             </a>
           </div>
         </div>

@@ -54,13 +54,13 @@ Each node SHALL display live status (idle, queued, running, success, failed), el
 
 #### Scenario: Node running
 - **WHEN** the worker is summarizing reviews
-- **THEN** the Analyze Reviews node shows "Running" with an increasing timer
+- **THEN** the «Сводка критиков» node shows «Работает» with an increasing timer
 
 ### Requirement: Node details
 Selecting a node SHALL show its details with tabs Overview (status, duration, start time, agent type, description, current rules), Rules (an editor with a help line for every parameter and a model picker), Input, Output and Logs from its latest execution. An "Edit rules" button SHALL open the Rules tab directly.
 
 #### Scenario: Inspect node output
-- **WHEN** the user selects the Fetch New Games node and opens Output
+- **WHEN** the user selects the «Отбор новых игр» node and opens «Выход»
 - **THEN** the list of games selected in the latest run is shown
 
 ### Requirement: Run history

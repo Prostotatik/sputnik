@@ -6,22 +6,24 @@ import { useState } from "react";
 import type { PipelineNode } from "@/core/pipeline/types";
 import { PROMPT_NODE_TYPES } from "@/core/pipeline/types";
 import type { NodeLog, RunNode } from "@/lib/db/schema";
-import { clock, duration } from "@/lib/client/format";
+import { clock, clockSeconds, duration } from "@/lib/client/format";
 import { EmptyState } from "../shell";
 import { NODE_META, STATUS_META, YoutubeGlyph } from "./node-meta";
-import { Field, inputCls, ModelSelect, PARAM_INFO, PromptEditor, TestOnGame, Toggle, type ModelOption } from "./rule-editor";
+import { Field, humanError, inputCls, ModelSelect, PARAM_INFO, PromptEditor, TestOnGame, Toggle, type ModelOption } from "./rule-editor";
 
 export const TABS = ["Overview", "Rules", "Input", "Output", "Logs"] as const;
 export type Tab = (typeof TABS)[number];
 
+export const TAB_LABELS: Record<Tab, string> = { Overview: "Обзор", Rules: "Правила", Input: "Вход", Output: "Выход", Logs: "Логи" };
+
 function JsonBlock({ value }: { value: unknown }) {
-  if (value === null || value === undefined) return <EmptyState title="Nothing recorded for this run" />;
+  if (value === null || value === undefined) return <EmptyState title="В этом запуске ничего не записано" />;
   return <pre className="max-h-[260px] overflow-auto rounded-lg bg-deep p-3 text-xs leading-relaxed text-muted">{JSON.stringify(value, null, 2)}</pre>;
 }
 
 function paramText(value: unknown): string {
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (value === "" || value === null || value === undefined) return "Automatic";
+  if (typeof value === "boolean") return value ? "Да" : "Нет";
+  if (value === "" || value === null || value === undefined) return "Автоматически";
   return String(value);
 }
 
@@ -45,7 +47,7 @@ function RulesForm({ node, models, onSaved, onDeleted }: { node: PipelineNode; m
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErrors(data.errors ?? [data.error ?? `Request failed (${res.status})`]);
+        setErrors(data.errors ?? [data.error ?? `Запрос не удался (${res.status})`]);
         return null;
       }
       setErrors([]);
@@ -58,7 +60,7 @@ function RulesForm({ node, models, onSaved, onDeleted }: { node: PipelineNode; m
   const save = async () => {
     const data = await call("PATCH", `/api/pipeline/${node.id}`, { enabled, prompt: hasPrompt ? prompt : undefined, params, name: node.type === "custom_prompt" ? String(params.label ?? node.name) : undefined });
     if (data) {
-      setSaved("Saved. The next run uses these rules.");
+      setSaved("Сохранено. Следующий запуск пойдёт по этим правилам.");
       onSaved();
     }
   };
@@ -68,12 +70,12 @@ function RulesForm({ node, models, onSaved, onDeleted }: { node: PipelineNode; m
       setEnabled(data.enabled);
       setPrompt(data.prompt ?? "");
       setParams(data.params);
-      setSaved("Restored the default rules.");
+      setSaved("Стандартные правила восстановлены.");
       onSaved();
     }
   };
   const remove = async () => {
-    if (!window.confirm(`Delete the custom rule "${node.name}"? Its answers stop showing on game cards.`)) return;
+    if (!window.confirm(`Удалить своё правило «${node.name}»? Его ответы пропадут из карточек игр.`)) return;
     if (await call("DELETE", `/api/pipeline/${node.id}`)) onDeleted();
   };
 
@@ -86,7 +88,7 @@ function RulesForm({ node, models, onSaved, onDeleted }: { node: PipelineNode; m
         void save();
       }}
     >
-      {node.type !== "sync" && <Toggle label="Run this step" help="Disabled steps are skipped on the next run; their stored data stays." checked={enabled} onChange={setEnabled} />}
+      {node.type !== "sync" && <Toggle label="Выполнять этот шаг" help="Выключенные шаги пропускаются в следующем запуске, собранные данные остаются." checked={enabled} onChange={setEnabled} />}
       {entries.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
           {entries.map(([key, value]) => {
@@ -121,26 +123,26 @@ function RulesForm({ node, models, onSaved, onDeleted }: { node: PipelineNode; m
       {errors.length > 0 && (
         <ul role="alert" className="rounded-lg border border-bad/40 bg-bad/10 p-3 text-xs text-bad">
           {errors.map((e) => (
-            <li key={e}>{e}</li>
+            <li key={e}>{humanError(e)}</li>
           ))}
         </ul>
       )}
       <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap items-center gap-2 rounded-b-[var(--radius-card)] border-t border-line bg-panel px-5 py-3">
         <button type="submit" disabled={busy || !dirty} className="btn-primary flex h-9 items-center gap-2 px-4 text-[13px]">
-          <Save className="h-4 w-4" strokeWidth={1.5} /> Save rules
+          <Save className="h-4 w-4" strokeWidth={1.5} /> Сохранить правила
         </button>
         {!node.isCustom && (
           <button type="button" onClick={reset} disabled={busy} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px]">
-            <RotateCcw className="h-4 w-4 text-dim" strokeWidth={1.5} /> Reset to default
+            <RotateCcw className="h-4 w-4 text-dim" strokeWidth={1.5} /> Вернуть стандартные
           </button>
         )}
         {node.isCustom && (
           <button type="button" onClick={remove} disabled={busy} className="btn-secondary flex h-9 items-center gap-2 px-3 text-[13px] text-bad">
-            <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Delete rule
+            <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Удалить правило
           </button>
         )}
         <span role="status" className={clsx("ml-auto text-xs", saved ? "text-good" : "text-dim")}>
-          {saved ?? (dirty ? "Unsaved changes" : "")}
+          {saved ?? (dirty ? "Есть несохранённые изменения" : "")}
         </span>
       </div>
     </form>
@@ -152,9 +154,9 @@ function RulesSummary({ node, onEdit }: { node: PipelineNode; onEdit: () => void
   return (
     <div className="mt-4 rounded-lg border border-line p-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted">Current rules</p>
+        <p className="text-xs text-muted">Текущие правила</p>
         <button type="button" onClick={onEdit} className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-2">
-          <Pencil className="h-3 w-3" /> Edit
+          <Pencil className="h-3 w-3" /> Изменить
         </button>
       </div>
       {entries.length > 0 && (
@@ -195,7 +197,7 @@ export function NodeDetails({
   onChanged: () => void;
   onDeleted: () => void;
 }) {
-  if (!node) return <EmptyState title="Select a step" className="card min-h-[420px]">Click a step in the graph to see its last execution and edit its rules.</EmptyState>;
+  if (!node) return <EmptyState title="Выберите шаг" className="card min-h-[420px]">Нажмите на шаг в графе, чтобы увидеть его последний запуск и поменять правила.</EmptyState>;
   const meta = NODE_META[node.type] ?? NODE_META.custom_prompt;
   const Icon = meta.icon;
   const status = node.enabled ? (exec?.status ?? "idle") : "skipped";
@@ -206,10 +208,10 @@ export function NodeDetails({
   return (
     <section className="card scroll-mt-4 p-5" aria-labelledby="node-title">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-[15px] font-medium">Step details</h2>
+        <h2 className="text-[15px] font-medium">Подробности шага</h2>
         <span className="flex items-center gap-2 font-mono text-xs text-muted">
           <span className={clsx("h-1.5 w-1.5 rounded-full", status === "running" && "live-dot")} style={{ background: st.color }} />
-          {node.enabled ? st.label : "Disabled"}
+          {node.enabled ? st.label : "Выключен"}
         </span>
       </div>
       <div className="mt-4 flex items-center gap-5">
@@ -226,12 +228,12 @@ export function NodeDetails({
         </div>
         {tab !== "Rules" && (
           <button type="button" onClick={() => onTab("Rules")} className="btn-secondary flex h-9 shrink-0 items-center gap-2 px-3 text-[13px]">
-            <Pencil className="h-3.5 w-3.5 text-dim" strokeWidth={1.5} /> Edit rules
+            <Pencil className="h-3.5 w-3.5 text-dim" strokeWidth={1.5} /> Изменить правила
           </button>
         )}
       </div>
 
-      <div role="tablist" aria-label="Step details" className="mt-5 flex gap-6 overflow-x-auto border-b border-line text-sm">
+      <div role="tablist" aria-label="Подробности шага" className="mt-5 flex gap-6 overflow-x-auto border-b border-line text-sm">
         {TABS.map((t) => (
           <button
             key={t}
@@ -241,7 +243,7 @@ export function NodeDetails({
             onClick={() => onTab(t)}
             className={clsx("-mb-px border-b-2 pb-2.5 whitespace-nowrap", tab === t ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg")}
           >
-            {t}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -251,19 +253,19 @@ export function NodeDetails({
           <div>
             <dl className="grid grid-cols-3 gap-4 text-xs text-muted">
               <div>
-                <dt>Duration</dt>
+                <dt>Длительность</dt>
                 <dd className="mt-1.5 flex items-center gap-2 text-[15px] text-fg">
                   <Clock3 className="h-4 w-4 text-muted" /> {duration(ms)}
                 </dd>
               </div>
               <div>
-                <dt>Started</dt>
+                <dt>Начало</dt>
                 <dd className="mt-1.5 flex items-center gap-2 text-[15px] text-fg">
                   <CalendarDays className="h-4 w-4 text-muted" /> {clock(exec?.startedAt)}
                 </dd>
               </div>
               <div>
-                <dt>Agent</dt>
+                <dt>Агент</dt>
                 <dd className="mt-1.5 flex items-center gap-2 text-[15px] text-fg">
                   <Bot className="h-4 w-4 text-dim" strokeWidth={1.5} /> {meta.agent}
                 </dd>
@@ -273,7 +275,7 @@ export function NodeDetails({
             {exec && exec.total > 0 && (
               <div className="mt-4">
                 <div className="mb-1.5 flex justify-between text-xs text-muted">
-                  <span>Progress</span>
+                  <span>Прогресс</span>
                   <span>
                     {exec.done} / {exec.total}
                   </span>
@@ -291,12 +293,12 @@ export function NodeDetails({
         {tab === "Output" && <JsonBlock value={exec?.output} />}
         {tab === "Logs" &&
           ((exec?.logs ?? []).length === 0 ? (
-            <EmptyState title="No log lines for this run" />
+            <EmptyState title="В этом запуске логов нет" />
           ) : (
             <ol className="max-h-[260px] space-y-1.5 overflow-auto font-mono text-xs">
               {(exec?.logs as NodeLog[]).map((l, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="shrink-0 text-dim">{new Date(l.ts).toLocaleTimeString("en-GB")}</span>
+                  <span className="shrink-0 text-dim">{clockSeconds(l.ts)}</span>
                   <span className={clsx(l.level === "error" ? "text-bad" : l.level === "warn" ? "text-warn" : "text-muted")}>{l.message}</span>
                 </li>
               ))}

@@ -3,15 +3,15 @@
 import clsx from "clsx";
 import { Maximize2 } from "lucide-react";
 import type { GameListItem } from "@/core/queries";
-import { num, shortDate, timeAgo } from "@/lib/client/format";
+import { count, dateTime, longDate, shortDate, timeAgo } from "@/lib/client/format";
 import { EmptyState } from "../shell";
 import { PlatformBadges, ScoreBadge, Skeleton } from "../ui";
 
 export const SORT_OPTIONS = [
-  { value: "release", label: "Sort: Newest release" },
-  { value: "metascore", label: "Sort: Metascore" },
-  { value: "userscore", label: "Sort: Userscore" },
-  { value: "updated", label: "Sort: Recently updated" },
+  { value: "release", label: "Сначала новые релизы" },
+  { value: "metascore", label: "По Metascore" },
+  { value: "userscore", label: "По Userscore" },
+  { value: "updated", label: "Недавно обновлённые" },
 ];
 
 export function GameList({
@@ -36,10 +36,10 @@ export function GameList({
   // The right-hand label shows the field the list is sorted by, so the order always reads correctly.
   const byUpdate = sort === "updated";
   return (
-    <section aria-label="Game list" className="flex flex-col">
+    <section aria-label="Список игр" className="flex flex-col">
       <div className="mb-3 flex items-baseline justify-between px-1">
-        <h1 className="text-xl font-medium">New games</h1>
-        <span className="font-mono text-xs text-dim tabular-nums">{num(total)} games</span>
+        <h1 className="text-xl font-medium">Новые игры</h1>
+        <span className="font-mono text-xs text-dim tabular-nums">{count(total, ["игра", "игры", "игр"])}</span>
       </div>
       {loading && items.length === 0 ? (
         <div className="space-y-2">
@@ -48,8 +48,8 @@ export function GameList({
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState title={filtered ? "No games match these filters" : "No games collected yet"} className="card">
-          {filtered ? "Clear the search or pick another platform." : "Press Run Now to collect the first 20 games from Metacritic."}
+        <EmptyState title={filtered ? "Под эти фильтры игр нет" : "Игры ещё не собраны"} className="card">
+          {filtered ? "Очистите поиск или выберите другую платформу." : "Нажмите «Запустить», чтобы собрать первые 20 игр с Metacritic."}
         </EmptyState>
       ) : (
         <ul className="space-y-1">
@@ -80,8 +80,8 @@ export function GameList({
                   </span>
                   <ScoreBadge score={g.metascore} />
                   <span
-                    className="w-14 text-right font-mono text-xs whitespace-nowrap text-dim"
-                    title={byUpdate ? `Updated ${new Date(g.updatedAt).toLocaleString("en-US")}` : `Released ${g.releaseDate ?? "date not announced"}`}
+                    className="min-w-14 text-right font-mono text-xs whitespace-nowrap text-dim"
+                    title={byUpdate ? `Обновлено ${dateTime(g.updatedAt)}` : g.releaseDate ? `Релиз ${longDate(g.releaseDate)}` : "Дата релиза не объявлена"}
                   >
                     {byUpdate ? timeAgo(g.updatedAt) : shortDate(g.releaseDate)}
                   </span>
@@ -98,7 +98,7 @@ export function GameList({
           aria-haspopup="dialog"
           className="mx-auto mt-3 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-dim transition-colors hover:text-fg"
         >
-          Show all {num(total)} games <Maximize2 className="h-3.5 w-3.5" />
+          Показать все: {count(total, ["игра", "игры", "игр"])} <Maximize2 className="h-3.5 w-3.5" />
         </button>
       )}
     </section>
