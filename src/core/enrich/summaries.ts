@@ -83,8 +83,8 @@ export async function summarizeReviews(
 ): Promise<{ summary: ReviewSummary; model: string; prompt: string }> {
   const prompt = renderPrompt(template, {
     title: game.title,
-    genres: game.genres.join(", ") || "unknown genre",
-    developer: game.developer ?? "unknown",
+    genres: game.genres.join(", ") || "жанр не указан",
+    developer: game.developer ?? "не указан",
     reviews: formatReviews(reviews),
   });
   const res = await ai.json(ctx, prompt, summarySchema, summaryValidator);

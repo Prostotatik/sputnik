@@ -24,15 +24,15 @@ export interface GameContext {
 export function gamePromptVars(g: GameContext): Record<string, string> {
   return {
     title: g.title,
-    genres: g.genres.join(", ") || "unknown genre",
-    platforms: g.platforms.join(", ") || "unknown",
-    developer: g.developer ?? "unknown",
+    genres: g.genres.join(", ") || "жанр не указан",
+    platforms: g.platforms.join(", ") || "не указаны",
+    developer: g.developer ?? "не указан",
     description: (g.description ?? "").slice(0, 1500),
-    metascore: g.metascore === null ? "n/a" : String(g.metascore),
-    userscore: g.userscore === null ? "n/a" : String(g.userscore),
-    criticVerdict: g.criticVerdict ?? "n/a",
-    userVerdict: g.userVerdict ?? "n/a",
-    letsplay: g.letsplayConclusion ?? "n/a",
+    metascore: g.metascore === null ? "нет данных" : String(g.metascore),
+    userscore: g.userscore === null ? "нет данных" : String(g.userscore),
+    criticVerdict: g.criticVerdict ?? "нет данных",
+    userVerdict: g.userVerdict ?? "нет данных",
+    letsplay: g.letsplayConclusion ?? "нет данных",
   };
 }
 
@@ -44,7 +44,7 @@ export function gameContext(db: Db, gameId: number): GameContext {
     genres: g.genres,
     platforms: platforms.map((p) => p.name),
     developer: g.developer,
-    description: g.description,
+    description: g.descriptionRu ?? g.description,
     metascore: g.metascore,
     userscore: g.userscore,
     criticVerdict: getSummary(db, gameId, "critic")?.verdict ?? null,

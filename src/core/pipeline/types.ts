@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { TRANSLATE_MODEL } from "../enrich/translate";
+
+// Validation messages reach the Rules editor, so they are in Russian.
+z.config(z.locales.ru());
 
 const preferredModel = z.string().max(80).default("");
 
@@ -16,7 +20,7 @@ export const paramSchemas = {
   sync: z.object({
     intervalMinutes: z.number().int().min(5).max(1440).default(60),
     gamesPerRun: z.number().int().min(1).max(100).default(20),
-    timezone: z.string().refine(isTimeZone, "Unknown time zone").default("Europe/Moscow"),
+    timezone: z.string().refine(isTimeZone, "Неизвестный часовой пояс").default("Europe/Moscow"),
     requestDelayMs: z.number().int().min(0).max(10000).default(700),
   }),
   fetch_games: z.object({
@@ -25,6 +29,8 @@ export const paramSchemas = {
     maxBrowsePages: z.number().int().min(1).max(50).default(10),
   }),
   parse_game: z.object({
+    translateDescription: z.boolean().default(true),
+    preferredModel: z.string().max(80).default(TRANSLATE_MODEL),
     userScoresPerPlatform: z.boolean().default(true),
   }),
   critic_summary: z.object({
@@ -53,7 +59,7 @@ export const paramSchemas = {
         } catch {
           return false;
         }
-      }, "Invalid regular expression"),
+      }, "Некорректное регулярное выражение"),
     maxCandidates: z.number().int().min(1).max(5).default(2),
     requireReviews: z.boolean().default(true),
   }),
@@ -67,7 +73,7 @@ export const paramSchemas = {
   letsplay_summary: z.object({ preferredModel }),
   insights: z.object({ preferredModel }),
   custom_prompt: z.object({
-    fieldKey: z.string().regex(/^[a-z][a-z0-9_]{1,39}$/, "Use lowercase letters, digits, underscore"),
+    fieldKey: z.string().regex(/^[a-z][a-z0-9_]{1,39}$/, "Только строчные латинские буквы, цифры и _, начиная с буквы"),
     label: z.string().min(1).max(60),
     requireReviews: z.boolean().default(false),
     preferredModel,
@@ -122,7 +128,7 @@ export function validateParams<T extends NodeType>(
 
 export function validatePrompt(type: NodeType, prompt: string | null | undefined): string[] {
   if (!PROMPT_NODE_TYPES.includes(type)) return [];
-  if (!prompt || prompt.trim().length < 10) return ["prompt: must be at least 10 characters"];
-  if (prompt.length > 8000) return ["prompt: must be at most 8000 characters"];
+  if (!prompt || prompt.trim().length < 10) return ["prompt: не короче 10 символов"];
+  if (prompt.length > 8000) return ["prompt: не длиннее 8000 символов"];
   return [];
 }

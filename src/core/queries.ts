@@ -118,18 +118,23 @@ export function gameDetail(db: Db, slug: string) {
     .all();
   const plats = platformsByGame(db, similarRows.map((s) => s.id));
   // Only show custom fields whose node still exists.
-  const liveKeys = new Set(
+  // Labels come from the node, so renaming a rule renames the field on every card.
+  const labels = new Map(
     listNodes(db)
       .filter((n) => n.type === "custom_prompt")
-      .map((n) => (n.params as { fieldKey: string }).fieldKey),
+      .map((n) => {
+        const p = n.params as { fieldKey: string; label: string };
+        return [p.fieldKey, p.label] as const;
+      }),
   );
   return {
-    game,
+    // The card shows the Russian description when there is one; the original stays for sync and similarity.
+    game: { ...game, description: game.descriptionRu ?? game.description },
     platforms,
     critic: summaries.find((s) => s.kind === "critic") ?? null,
     user: summaries.find((s) => s.kind === "user") ?? null,
     insight,
-    customFields: customFields.filter((f) => liveKeys.has(f.key)),
+    customFields: customFields.filter((f) => labels.has(f.key)).map((f) => ({ ...f, label: labels.get(f.key)! })),
     similar: similarRows.map((s) => ({ ...s, platforms: plats.get(s.id) ?? [] })),
   };
 }

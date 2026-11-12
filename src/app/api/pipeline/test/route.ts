@@ -17,18 +17,18 @@ export async function POST(req: Request) {
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
   // Only catalog text models; anything else falls back to the rotation.
   const preferredModel = typeof body.preferredModel === "string" && modelSpec(body.preferredModel)?.capabilities.includes("text") ? body.preferredModel : undefined;
-  const errors = [...(slug ? [] : ["slug: pick a game to test on"]), ...validatePrompt("custom_prompt", prompt)];
+  const errors = [...(slug ? [] : ["slug: выберите игру для проверки"]), ...validatePrompt("custom_prompt", prompt)];
   if (errors.length) return json({ errors }, { status: 400 });
-  if (inFlight >= MAX_PARALLEL) return json({ errors: ["Another rule test is running. Try again in a few seconds."] }, { status: 429 });
+  if (inFlight >= MAX_PARALLEL) return json({ errors: ["Уже идёт другая проверка правила. Попробуйте через несколько секунд."] }, { status: 429 });
   if (ruleTestsToday(db()) + inFlight >= RULE_TEST_DAILY_LIMIT) {
-    return json({ errors: [`Rule tests are limited to ${RULE_TEST_DAILY_LIMIT} AI calls a day. Save the rule and let the next run fill it in.`] }, { status: 429 });
+    return json({ errors: [`Проверки правил ограничены ${RULE_TEST_DAILY_LIMIT} вызовами ИИ в день. Сохраните правило, и следующий запуск заполнит поле сам.`] }, { status: 429 });
   }
   inFlight++;
   try {
     const res = await previewCustomField(db(), new AiService(db()), { slug, prompt, preferredModel });
-    return res ? json(res) : json({ errors: ["Game not found"] }, { status: 404 });
+    return res ? json(res) : json({ errors: ["Игра не найдена"] }, { status: 404 });
   } catch (err) {
-    return json({ errors: [`AI call failed: ${(err as Error).message}`] }, { status: 502 });
+    return json({ errors: [`Вызов ИИ не удался: ${(err as Error).message}`] }, { status: 502 });
   } finally {
     inFlight--;
   }

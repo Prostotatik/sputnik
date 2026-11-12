@@ -24,7 +24,7 @@ export class AiCallError extends Error {
 
 export class QuotaExhaustedError extends Error {
   constructor(capability: Capability, readonly attempts: string[]) {
-    super(`No ${capability} model available within limits (tried: ${attempts.join(", ") || "none"})`);
+    super(`Нет доступной модели (${capability}) в пределах лимитов, пробовали: ${attempts.join(", ") || "ни одной"}`);
     this.name = "QuotaExhaustedError";
   }
 }

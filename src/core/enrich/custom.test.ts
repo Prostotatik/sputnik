@@ -61,7 +61,7 @@ describe("custom rule preview", () => {
     db.insert(gamePlatforms).values({ gameId: id, slug: "pc", name: "PC" }).run();
     const ai = fakeAi("  Premium.  ");
     const res = await previewCustomField(db, ai, { slug: "er", prompt: "{{title}} ({{genres}}) on {{platforms}}, meta {{metascore}}, critics: {{criticVerdict}}" });
-    expect(res).toEqual({ value: "Premium.", model: "fake", game: "Elden Ring", prompt: "Elden Ring (Action RPG) on PC, meta 96, critics: n/a" });
+    expect(res).toEqual({ value: "Premium.", model: "fake", game: "Elden Ring", prompt: "Elden Ring (Action RPG) on PC, meta 96, critics: нет данных" });
     expect(db.select().from(gameCustomFields).all()).toHaveLength(0);
     expect(await previewCustomField(db, ai, { slug: "missing", prompt: "x {{title}}" })).toBeNull();
   });
@@ -80,7 +80,7 @@ describe("key insights", () => {
     }
     const res = await generateKeyInsights(db, ai, { purpose: "insights" }, "Metrics:\n{{metrics}}", computeAnalytics(db, { days: 30 }));
     expect(res?.items).toHaveLength(1);
-    expect(ai.prompts[0]).toContain("Genre share: Action 100%");
+    expect(ai.prompts[0]).toContain("Доля жанров: Action 100%");
     expect(db.select().from(analyticsInsights).all()).toHaveLength(1);
   });
 });

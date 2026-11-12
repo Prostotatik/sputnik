@@ -8,6 +8,13 @@
       "when": 1794132787363,
       "tag": "0000_lame_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1794482195099,
+      "tag": "0001_motionless_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

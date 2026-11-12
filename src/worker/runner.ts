@@ -22,7 +22,8 @@ import type { GameDetails, ScoreStats } from "@/core/metacritic/map";
 import { renderPrompt } from "@/core/pipeline/defaults";
 import { listNodes, nodeOfType } from "@/core/pipeline/repo";
 import type { NodeParams, PipelineNode } from "@/core/pipeline/types";
-import { setHeroImage, upsertGame } from "@/core/repo/games";
+import { getDescriptionRu, saveDescriptionRu, setHeroImage, upsertGame } from "@/core/repo/games";
+import { isRussian, translateDescription } from "@/core/enrich/translate";
 import { RunTracker } from "@/core/runs";
 import { addVideoSeconds, loadDailyState, markProcessed, saveDailyState, selectCandidates, type Candidate } from "@/core/selection";
 
@@ -76,12 +77,12 @@ export async function executeRun(
     // 1. Select candidates.
     const fetchNode = enabled("fetch_games");
     if (!fetchNode) {
-      run.event("warn", "Fetch New Games is disabled: nothing to do");
-      run.finish("success", "Fetch node disabled");
+      run.event("warn", "Шаг «Отбор новых игр» выключен: обрабатывать нечего");
+      run.finish("success", "Отбор новых игр выключен");
       return run.id;
     }
     run.nodeStart(fetchNode.id);
-    run.update({ currentStep: "Fetching new games" });
+    run.update({ currentStep: "Отбираем новые игры" });
     const state = loadDailyState(db, today);
     const explicit = opts.candidates;
     const selection = explicit
@@ -111,8 +112,8 @@ export async function executeRun(
         run.nodeData(n.id, { total: candidates.length });
       }
     }
-    if (explicit) run.event("info", `Reprocessing ${candidates.length} games from the library`, fetchNode.id);
-    else run.event("info", `Processing ${candidates.length} new games`, fetchNode.id, `Pages: ${selection.pagesVisited.join(", ") || "New Releases"}`);
+    if (explicit) run.event("info", `Переобрабатываем игры из библиотеки: ${candidates.length}`, fetchNode.id);
+    else run.event("info", `Обрабатываем новые игры: ${candidates.length}`, fetchNode.id, `Страницы: ${selection.pagesVisited.join(", ") || "New Releases"}`);
 
     // 2. Process each game.
     const touched: number[] = [];
@@ -120,7 +121,7 @@ export async function executeRun(
     let updated = 0;
     let errors = 0;
     for (const [i, cand] of candidates.entries()) {
-      run.update({ processed: i, currentGame: cand.title, currentStep: `Parsing ${cand.title}` });
+      run.update({ processed: i, currentGame: cand.title, currentStep: `Разбираем ${cand.title}` });
       try {
         const res = await processGame(deps, run, nodes, cand, today, mark);
         if (res) {
@@ -130,7 +131,7 @@ export async function executeRun(
         }
       } catch (err) {
         errors++;
-        run.event("error", `Failed to process ${cand.title}: ${(err as Error).message}`);
+        run.event("error", `Не удалось обработать ${cand.title}: ${(err as Error).message}`);
       } finally {
         if (!explicit) markProcessed(db, today, cand.slug);
         run.update({ processed: i + 1, added, updated, errors });
@@ -141,10 +142,10 @@ export async function executeRun(
     const similarNode = enabled("similar");
     if (similarNode && touched.length) {
       run.nodeStart(similarNode.id);
-      run.update({ currentStep: "Finding similar games", currentGame: null });
+      run.update({ currentStep: "Ищем похожие игры", currentGame: null });
       const changed = refreshSimilar(db, touched, similarNode.params.topK);
       run.nodeData(similarNode.id, { output: { touchedGames: touched.length, listsUpdated: changed }, done: touched.length, total: touched.length });
-      run.nodeLog(similarNode.id, "info", `Updated ${changed} similar-game lists`);
+      run.nodeLog(similarNode.id, "info", `Обновлено списков похожих игр: ${changed}`);
       mark(similarNode.id, true);
     }
 
@@ -152,7 +153,7 @@ export async function executeRun(
     const insightsNode = enabled("insights");
     if (insightsNode && touched.length) {
       run.nodeStart(insightsNode.id);
-      run.update({ currentStep: "Generating insights", currentGame: null });
+      run.update({ currentStep: "Готовим инсайты", currentGame: null });
       try {
         const analytics = computeAnalytics(db, { days: 30 });
         const res = await generateKeyInsights(db, ai, { purpose: "insights", runId: run.id, preferredModel: insightsNode.params.preferredModel }, insightsNode.prompt ?? "", analytics);
@@ -160,7 +161,7 @@ export async function executeRun(
           run.nodeData(insightsNode.id, { input: { prompt: res.prompt }, output: { model: res.model, insights: res.items } });
           mark(insightsNode.id, true);
         } else {
-          run.nodeLog(insightsNode.id, "info", "Not enough games for insights yet");
+          run.nodeLog(insightsNode.id, "info", "Для инсайтов пока мало игр");
         }
       } catch (err) {
         mark(insightsNode.id, false);
@@ -233,8 +234,23 @@ async function processGame(
       video: details.videoUrl,
     },
   });
-  run.nodeLog(parse.id, "info", `${saved.created ? "Added" : "Updated"} ${details.title}`);
+  run.nodeLog(parse.id, "info", `${saved.created ? "Добавлена" : "Обновлена"} ${details.title}`);
   const gameId = saved.id;
+
+  // Russian description (kept apart from the original, which sync and similarity use).
+  if (parse.params.translateDescription && details.description && !getDescriptionRu(db, gameId)) {
+    if (isRussian(details.description)) saveDescriptionRu(db, gameId, details.description);
+    else {
+      try {
+        run.update({ currentStep: `Переводим описание ${details.title}` });
+        const tr = await translateDescription(ai, { purpose: "translate", runId: run.id, gameId, preferredModel: parse.params.preferredModel }, details.description);
+        saveDescriptionRu(db, gameId, tr.value);
+        run.nodeLog(parse.id, "info", `${details.title}: описание переведено (${tr.model})`);
+      } catch (err) {
+        run.nodeLog(parse.id, "warn", `${details.title}: перевод описания не удался (${(err as Error).message}), показываем оригинал`);
+      }
+    }
+  }
   const genreList = details.genres;
 
   // Review summaries
@@ -247,11 +263,11 @@ async function processGame(
     run.nodeStart(node.id);
     const existing = getSummary(db, gameId, kind);
     if (!needsSummary(existing, stats.reviewCount)) {
-      run.nodeLog(node.id, "info", `${details.title}: ${stats.reviewCount === 0 ? `no ${kind} reviews yet` : "unchanged review count"}, skipped`);
+      run.nodeLog(node.id, "info", `${details.title}: ${stats.reviewCount === 0 ? `пока нет отзывов ${kind === "critic" ? "критиков" : "игроков"}` : "число отзывов не изменилось"}, пропущено`);
       run.nodeIncrement(node.id);
       continue;
     }
-    run.update({ currentStep: `Analyzing ${kind} reviews` });
+    run.update({ currentStep: kind === "critic" ? "Анализируем рецензии критиков" : "Анализируем отзывы игроков" });
     try {
       const max = (node.params as NodeParams<"critic_summary">).maxReviews;
       const half = Math.ceil(max / 2);
@@ -260,7 +276,7 @@ async function processGame(
       const extra = neg.items.length < half / 2 ? (await mc.reviews(kind, cand.slug, "neutral", half)).items : [];
       const sample = balancedSample(pos.items, [...neg.items, ...extra], max);
       if (sample.length === 0) {
-        run.nodeLog(node.id, "info", `${details.title}: no review texts available`);
+        run.nodeLog(node.id, "info", `${details.title}: текстов отзывов нет`);
         run.nodeIncrement(node.id);
         continue;
       }
@@ -296,9 +312,9 @@ async function processGame(
       try {
         const res = await ai.embedding({ purpose: "embedding", runId: run.id, gameId }, text);
         saveEmbedding(db, gameId, res.model, res.value, hash);
-        run.nodeLog(similar.id, "info", `Embedded ${details.title} with ${res.model}`);
+        run.nodeLog(similar.id, "info", `Эмбеддинг ${details.title} готов (${res.model})`);
       } catch (err) {
-        run.nodeLog(similar.id, "warn", `${details.title}: embedding unavailable (${(err as Error).message}); metadata fallback`);
+        run.nodeLog(similar.id, "warn", `${details.title}: эмбеддинг недоступен (${(err as Error).message}), сравниваем по метаданным`);
       }
     }
   }
@@ -310,7 +326,7 @@ async function processGame(
     for (const node of customs) {
       run.nodeStart(node.id);
       if (node.params.requireReviews && critic.reviewCount + user.reviewCount === 0) {
-        run.nodeLog(node.id, "info", `${details.title}: no reviews, skipped`);
+        run.nodeLog(node.id, "info", `${details.title}: нет отзывов, пропущено`);
         run.nodeIncrement(node.id);
         continue;
       }
@@ -346,18 +362,18 @@ async function processLetsplay(
   const verdictNode = nodeOfType(nodes, "letsplay_summary");
   run.nodeStart(yt.id);
   if (yt.params.requireReviews && reviewCount === 0) {
-    run.nodeLog(yt.id, "info", `${details.title}: no reviews yet, let's-play skipped`);
+    run.nodeLog(yt.id, "info", `${details.title}: отзывов пока нет, летсплей пропущен`);
     run.nodeIncrement(yt.id);
     return;
   }
   const existing = getInsight(db, gameId);
   if (existing && now() - existing.updatedAt < INSIGHT_REFRESH_MS) {
-    run.nodeLog(yt.id, "info", `${details.title}: let's-play insight is fresh, skipped`);
+    run.nodeLog(yt.id, "info", `${details.title}: вывод по летсплею ещё свежий, пропущено`);
     run.nodeIncrement(yt.id);
     return;
   }
 
-  run.update({ currentStep: "Searching let's-plays" });
+  run.update({ currentStep: "Ищем летсплеи" });
   const query = renderPrompt(yt.params.queryTemplate, { title: details.title });
   let picked: VideoCandidate[];
   try {
@@ -375,7 +391,7 @@ async function processLetsplay(
     return;
   }
   if (!picked.length) {
-    run.nodeLog(yt.id, "info", `${details.title}: no commentated let's-play found`);
+    run.nodeLog(yt.id, "info", `${details.title}: летсплей с комментариями не найден`);
     return;
   }
   if (!tr?.enabled) return;
@@ -385,10 +401,10 @@ async function processLetsplay(
     const budget = remainingBudgetSec(loadDailyState(db, today).videoSeconds, tr.params.dailyBudgetMinutes);
     const win = clipWindow(video.durationSec, tr.params.startOffsetSec, Math.min(tr.params.clipSeconds, budget));
     if (budget < 30) {
-      run.nodeLog(tr.id, "warn", `Daily video budget exhausted (${tr.params.dailyBudgetMinutes} min); ${details.title} skipped`);
+      run.nodeLog(tr.id, "warn", `Дневной лимит видео исчерпан (${tr.params.dailyBudgetMinutes} мин), ${details.title} пропущена`);
       return;
     }
-    run.update({ currentStep: "Transcribing let's-play" });
+    run.update({ currentStep: "Расшифровываем летсплей" });
     let transcript = "";
     let model = "";
     try {
@@ -412,7 +428,7 @@ async function processLetsplay(
       output: { model, chars: transcript.length, excerpt: transcript.slice(0, 1500) },
     });
     if (transcript.length < tr.params.minTranscriptChars) {
-      run.nodeLog(tr.id, "info", `${video.title}: narration too short (${transcript.length} chars), trying next candidate`);
+      run.nodeLog(tr.id, "info", `${video.title}: слишком мало речи (${transcript.length} симв.), пробуем следующее видео`);
       continue;
     }
     mark(tr.id, true);
@@ -420,11 +436,11 @@ async function processLetsplay(
 
     if (!verdictNode?.enabled) return;
     run.nodeStart(verdictNode.id);
-    run.update({ currentStep: "Analyzing let's-play" });
+    run.update({ currentStep: "Анализируем летсплей" });
     try {
       const prompt = renderPrompt(verdictNode.prompt ?? "", {
         title: details.title,
-        channel: video.channel ?? "unknown",
+        channel: video.channel ?? "неизвестный канал",
         videoTitle: video.title,
         transcript: transcript.slice(0, 12_000),
       });
@@ -438,7 +454,7 @@ async function processLetsplay(
       mark(verdictNode.id, true);
       run.nodeIncrement(verdictNode.id);
       run.nodeData(verdictNode.id, { input: { video: video.url, transcriptChars: transcript.length }, output: { model: res.model, ...res.value } });
-      run.event("info", `Analyzed let's-play for ${details.title}`, verdictNode.id, `${video.title} — ${video.views.toLocaleString("en-US")} views`);
+      run.event("info", `Летсплей ${details.title} проанализирован`, verdictNode.id, `${video.title} — ${video.views.toLocaleString("ru-RU")} просмотров`);
     } catch (err) {
       mark(verdictNode.id, false);
       run.nodeLog(verdictNode.id, "error", `${details.title}: ${(err as Error).message}`);

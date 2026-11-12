@@ -14,4 +14,13 @@ describe("isPlaceholderPoint", () => {
     }
     expect(realPoints(["Too easy", "No negative feedback"])).toEqual(["Too easy"]);
   });
+
+  it("handles Russian placeholders and keeps Russian complaints", () => {
+    for (const t of ["Нет негативных отзывов", "Отсутствие критики", "Без существенных минусов", "Жалоб не отмечено", "Никаких претензий"]) {
+      expect(isPlaceholderPoint(t)).toBe(true);
+    }
+    for (const t of ["Нет мультиплеера", "Без сохранений в любой точке", "Слишком легко"]) {
+      expect(isPlaceholderPoint(t)).toBe(false);
+    }
+  });
 });

@@ -99,7 +99,7 @@ function bucketsFor(days: number, from: number, to: number): { start: number; la
   const span = to - from;
   const step = days === 0 || days > 120 ? 30 * DAY : days > 31 ? 7 * DAY : days > 7 ? 2 * DAY : DAY;
   const count = Math.max(1, Math.min(12, Math.ceil(span / step)));
-  const fmt = new Intl.DateTimeFormat("en-US", step >= 30 * DAY ? { month: "short" } : { month: "short", day: "numeric" });
+  const fmt = new Intl.DateTimeFormat("ru-RU", step >= 30 * DAY ? { month: "short" } : { month: "short", day: "numeric" });
   return Array.from({ length: count }, (_, i) => {
     const start = to - (count - i) * step;
     return { start, label: fmt.format(new Date(start + step)) };
@@ -267,14 +267,14 @@ export function computeAnalytics(db: Db, f: AnalyticsFilter): AnalyticsData {
 /** Compact text summary of the aggregates for the insights prompt. */
 export function metricsForPrompt(a: AnalyticsData): string {
   const lines = [
-    `Period: last ${a.filter.days || "all"} days; games: ${a.kpis.totalGames.value} (previous period: ${a.kpis.totalGames.previous ?? "n/a"}).`,
-    `Average Metascore: ${a.kpis.avgMetascore.value ?? "n/a"}; average Userscore: ${a.kpis.avgUserscore.value ?? "n/a"}.`,
-    `Trending genre: ${a.kpis.trendingGenre.name ?? "n/a"} (share growth ${a.kpis.trendingGenre.growth ?? "n/a"}%).`,
-    `Genre share: ${a.genreShare.map((g) => `${g.genre} ${g.share}%`).join(", ")}.`,
-    `Genres (games, avg reviews per game, avg Metascore): ${a.opportunities.map((o) => `${o.genre} (${o.games}, ${o.interest}, ${o.avgMetascore ?? "n/a"}) [${o.quadrant}]`).join("; ")}.`,
-    `Supply vs demand by period: ${a.supplyDemand.map((s) => `${s.label}: ${s.games} games / ${s.interest} reviews`).join("; ")}.`,
-    a.combinations.venn ? `${a.combinations.venn.share}% of games ship on both ${a.combinations.venn.a} and ${a.combinations.venn.b}.` : "",
-    `Top games by player reviews: ${a.topGames.map((g) => `${g.title} (${g.userReviews} reviews, user ${g.userscore ?? "n/a"})`).join("; ")}.`,
+    `Период: последние ${a.filter.days || "все"} дн.; игр: ${a.kpis.totalGames.value} (в прошлом периоде: ${a.kpis.totalGames.previous ?? "нет данных"}).`,
+    `Средний Metascore: ${a.kpis.avgMetascore.value ?? "нет данных"}; средний Userscore: ${a.kpis.avgUserscore.value ?? "нет данных"}.`,
+    `Растущий жанр: ${a.kpis.trendingGenre.name ?? "нет данных"} (рост доли: ${a.kpis.trendingGenre.growth === null || a.kpis.trendingGenre.growth === undefined ? "нет данных" : `${a.kpis.trendingGenre.growth}%`}).`,
+    `Доля жанров: ${a.genreShare.map((g) => `${g.genre} ${g.share}%`).join(", ")}.`,
+    `Жанры (игр, отзывов в среднем на игру, средний Metascore): ${a.opportunities.map((o) => `${o.genre} (${o.games}, ${o.interest}, ${o.avgMetascore ?? "нет данных"}) [${o.quadrant}]`).join("; ")}.`,
+    `Предложение и спрос по периодам: ${a.supplyDemand.map((s) => `${s.label}: ${s.games} игр / ${s.interest} отзывов`).join("; ")}.`,
+    a.combinations.venn ? `${a.combinations.venn.share}% игр выходят и на ${a.combinations.venn.a}, и на ${a.combinations.venn.b}.` : "",
+    `Топ игр по отзывам игроков: ${a.topGames.map((g) => `${g.title} (${g.userReviews} отзывов, оценка игроков ${g.userscore ?? "нет данных"})`).join("; ")}.`,
   ];
   return lines.filter(Boolean).join("\n");
 }

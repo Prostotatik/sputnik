@@ -27,5 +27,5 @@ export async function POST(req: Request) {
     });
     return res.ok ? json(res.value, { status: 201 }) : json({ errors: res.errors }, { status: 400 });
   }
-  return json({ errors: ["Unknown action"] }, { status: 400 });
+  return json({ errors: ["Неизвестное действие"] }, { status: 400 });
 }

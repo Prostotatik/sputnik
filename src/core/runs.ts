@@ -83,7 +83,7 @@ export class RunTracker {
     }
     if (requestId) db.update(runRequests).set({ runId: id }).where(eq(runRequests.id, requestId)).run();
     const tracker = new RunTracker(db, id);
-    tracker.event("info", `Started new run (${trigger})`);
+    tracker.event("info", `Запуск начат (${trigger === "manual" ? "вручную" : "по расписанию"})`);
     return tracker;
   }
 
@@ -168,9 +168,9 @@ export class RunTracker {
     const run = this.get();
     this.event(
       status === "success" ? "success" : "error",
-      status === "success" ? "Worker finished successfully" : `Run failed${note ? `: ${note}` : ""}`,
+      status === "success" ? "Воркер успешно завершил запуск" : `Запуск завершился ошибкой${note ? `: ${note}` : ""}`,
       undefined,
-      `Added: ${run.added}, Updated: ${run.updated}, Errors: ${run.errors}`,
+      `Добавлено: ${run.added}, обновлено: ${run.updated}, ошибок: ${run.errors}`,
     );
   }
 }

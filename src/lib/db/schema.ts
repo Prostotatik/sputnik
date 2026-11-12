@@ -17,6 +17,8 @@ export const games = sqliteTable(
     slug: text("slug").notNull().unique(),
     title: text("title").notNull(),
     description: text("description"),
+    /** Russian translation of `description`; cleared when Metacritic changes the original. */
+    descriptionRu: text("description_ru"),
     releaseDate: text("release_date"),
     coverUrl: text("cover_url"),
     cardImageUrl: text("card_image_url"),

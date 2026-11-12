@@ -24,7 +24,7 @@ export function upsertGame(
   now = Date.now(),
 ): UpsertResult {
   return db.transaction((tx) => {
-    const existing = tx.select({ id: games.id, heroUrl: games.heroUrl }).from(games).where(eq(games.slug, details.slug)).get();
+    const existing = tx.select({ id: games.id, description: games.description }).from(games).where(eq(games.slug, details.slug)).get();
     const platformScores = details.platforms.map((p) => p.metascore).filter((s): s is number => s !== null);
     const values = {
       slug: details.slug,
@@ -50,7 +50,9 @@ export function upsertGame(
     let id: number;
     if (existing) {
       id = existing.id;
-      tx.update(games).set(values).where(eq(games.id, id)).run();
+      // A changed original invalidates its translation so the next run translates it again.
+      const reset = existing.description !== details.description ? { descriptionRu: null } : {};
+      tx.update(games).set({ ...values, ...reset }).where(eq(games.id, id)).run();
     } else {
       id = tx
         .insert(games)
@@ -88,4 +90,12 @@ export function upsertGame(
 
 export function setHeroImage(db: Db, gameId: number, url: string | null): void {
   db.update(games).set({ heroUrl: url }).where(eq(games.id, gameId)).run();
+}
+
+export function saveDescriptionRu(db: Db, gameId: number, text: string): void {
+  db.update(games).set({ descriptionRu: text }).where(eq(games.id, gameId)).run();
+}
+
+export function getDescriptionRu(db: Db, gameId: number): string | null {
+  return db.select({ t: games.descriptionRu }).from(games).where(eq(games.id, gameId)).get()?.t ?? null;
 }

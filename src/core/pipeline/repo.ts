@@ -1,7 +1,8 @@
 import { asc, eq } from "drizzle-orm";
 import type { Db } from "@/lib/db/client";
 import { pipelineNodes } from "@/lib/db/schema";
-import { DEFAULT_CUSTOM_PROMPT, defaultPipeline } from "./defaults";
+import { DEFAULT_CUSTOM_PROMPT, customDescription, defaultPipeline } from "./defaults";
+import { LEGACY_CUSTOM_DESCRIPTION, LEGACY_CUSTOM_PROMPT, LEGACY_NODES, LEGACY_PROMPTS } from "./legacy";
 import {
   isNodeType,
   validateParams,
@@ -19,10 +20,45 @@ function insertDefaults(db: Db): void {
     .run();
 }
 
-/** Seeds the default pipeline if no nodes exist yet. */
+/**
+ * Moves rows still holding the old English defaults to the Russian ones. Only exact matches change,
+ * so names, descriptions and prompts a user edited are kept. Safe to run any number of times.
+ */
+export function upgradeLegacyNodes(db: Db): number {
+  const defaults = new Map(defaultPipeline().map((n) => [n.id, n]));
+  let changed = 0;
+  db.transaction((tx) => {
+    for (const row of tx.select().from(pipelineNodes).all()) {
+      const patch: Partial<typeof pipelineNodes.$inferInsert> = {};
+      const def = defaults.get(row.id);
+      const legacy = LEGACY_NODES[row.id];
+      if (def && legacy && !row.isCustom) {
+        if (row.name === legacy.name) patch.name = def.name;
+        if (row.description === legacy.description) patch.description = def.description;
+        if (LEGACY_PROMPTS[row.id] !== undefined && row.prompt === LEGACY_PROMPTS[row.id]) patch.prompt = def.prompt;
+      }
+      if (row.isCustom) {
+        const m = LEGACY_CUSTOM_DESCRIPTION.exec(row.description);
+        if (m) patch.description = customDescription(m[1]);
+        if (row.prompt?.startsWith(LEGACY_CUSTOM_PROMPT)) patch.prompt = DEFAULT_CUSTOM_PROMPT + row.prompt.slice(LEGACY_CUSTOM_PROMPT.length);
+      }
+      if (Object.keys(patch).length) {
+        tx.update(pipelineNodes).set(patch).where(eq(pipelineNodes.id, row.id)).run();
+        changed++;
+      }
+    }
+  });
+  return changed;
+}
+
+const upgraded = new WeakSet<Db>();
+
+/** Seeds the default pipeline if no nodes exist yet, and upgrades legacy English rows once per connection. */
 export function ensurePipeline(db: Db): void {
   const existing = db.select({ id: pipelineNodes.id }).from(pipelineNodes).limit(1).all();
   if (existing.length === 0) insertDefaults(db);
+  else if (!upgraded.has(db)) upgradeLegacyNodes(db);
+  upgraded.add(db);
 }
 
 /** Restores all default nodes and removes custom nodes. */
@@ -36,7 +72,7 @@ export function resetPipeline(db: Db): void {
 /** Restores a single default node to its default prompt and params. */
 export function resetNode(db: Db, id: string): ValidationResult<PipelineNode> {
   const def = defaultPipeline().find((n) => n.id === id);
-  if (!def) return { ok: false, errors: ["Only default nodes can be reset"] };
+  if (!def) return { ok: false, errors: ["Сбросить можно только стандартный шаг"] };
   db.update(pipelineNodes)
     .set({ prompt: def.prompt, params: def.params, enabled: true, updatedAt: Date.now() })
     .where(eq(pipelineNodes.id, id))
@@ -94,21 +130,21 @@ export interface NodePatch {
 
 export function updateNode(db: Db, id: string, patch: NodePatch): ValidationResult<PipelineNode> {
   const current = getNode(db, id);
-  if (!current) return { ok: false, errors: ["Node not found"] };
+  if (!current) return { ok: false, errors: ["Шаг не найден"] };
   const errors: string[] = [];
   const params = validateParams(current.type, { ...current.params, ...(patch.params ?? {}) });
   if (!params.ok) errors.push(...params.errors);
   const prompt = patch.prompt !== undefined ? patch.prompt : current.prompt;
   errors.push(...validatePrompt(current.type, prompt));
   const name = patch.name?.trim() ?? current.name;
-  if (!name) errors.push("name: required");
+  if (!name) errors.push("name: обязательное поле");
   if (errors.length > 0 || !params.ok) return { ok: false, errors };
   if (current.type === "custom_prompt") {
     const key = (params.value as NodeParams<"custom_prompt">).fieldKey;
     const clash = listNodes(db).find(
       (n) => n.id !== id && n.type === "custom_prompt" && (n.params as NodeParams<"custom_prompt">).fieldKey === key,
     );
-    if (clash) return { ok: false, errors: [`params.fieldKey: "${key}" is already used by ${clash.name}`] };
+    if (clash) return { ok: false, errors: [`params.fieldKey: "${key}" уже занят шагом «${clash.name}»`] };
   }
   db.update(pipelineNodes)
     .set({
@@ -148,7 +184,7 @@ export function addCustomNode(db: Db, input: CustomNodeInput): ValidationResult<
   const errors = [...(params.ok ? [] : params.errors), ...validatePrompt("custom_prompt", prompt)];
   if (!params.ok || errors.length) return { ok: false, errors };
   if (nodes.some((n) => n.type === "custom_prompt" && (n.params as NodeParams<"custom_prompt">).fieldKey === params.value.fieldKey)) {
-    return { ok: false, errors: [`params.fieldKey: "${params.value.fieldKey}" is already used`] };
+    return { ok: false, errors: [`params.fieldKey: «${params.value.fieldKey}» уже занят`] };
   }
   const parentId =
     input.parentId && nodes.some((n) => n.id === input.parentId)
@@ -160,7 +196,7 @@ export function addCustomNode(db: Db, input: CustomNodeInput): ValidationResult<
       id,
       type: "custom_prompt",
       name: input.label,
-      description: `Custom field "${input.label}" generated for every processed game.`,
+      description: customDescription(input.label),
       enabled: true,
       prompt,
       params: params.value,

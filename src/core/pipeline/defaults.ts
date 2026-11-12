@@ -1,41 +1,41 @@
 import { paramSchemas, type NodeType, type PipelineNode } from "./types";
 
-const CRITIC_PROMPT = `You analyse professional critic reviews of the video game "{{title}}" ({{genres}}; developer: {{developer}}).
+const CRITIC_PROMPT = `Ты анализируешь рецензии профессиональных критиков на видеоигру «{{title}}» ({{genres}}; разработчик: {{developer}}).
 
-Reviews (score out of 100, then excerpt):
+Рецензии (оценка из 100, затем фрагмент):
 {{reviews}}
 
-Summarise what critics like and dislike about the game. Return 3-5 short likes and 3-5 short dislikes (each 2-6 words, concrete, no score numbers) and a one-paragraph verdict (max 60 words). If reviews are almost uniformly positive, return fewer dislikes or none. Never write points that only state an absence, like "No negative feedback". Write in English.`;
+Кратко опиши, что критикам нравится и не нравится в игре. Верни 3–5 коротких плюсов (likes) и 3–5 коротких минусов (dislikes), каждый из 2–6 слов, конкретно и без цифр оценок, и вердикт одним абзацем (verdict, не больше 60 слов). Если рецензии почти единогласно хвалят игру, верни меньше минусов или ни одного. Не пиши пункты, которые лишь сообщают об отсутствии мнения, вроде «Нет негативных отзывов». Пиши на русском языке.`;
 
-const USER_PROMPT = `You analyse player (user) reviews of the video game "{{title}}" ({{genres}}).
+const USER_PROMPT = `Ты анализируешь отзывы игроков на видеоигру «{{title}}» ({{genres}}).
 
-Reviews (score out of 10, then excerpt):
+Отзывы (оценка из 10, затем фрагмент):
 {{reviews}}
 
-Summarise what players like and dislike. Return 3-5 short likes and 3-5 short dislikes (each 2-6 words, concrete: performance, difficulty, story, monetisation, etc.) and a one-paragraph verdict (max 60 words). Ignore spam and off-topic text. If players raise no real complaints, return an empty dislikes list rather than points like "No negative feedback". Write in English.`;
+Кратко опиши, что игрокам нравится и не нравится. Верни 3–5 коротких плюсов (likes) и 3–5 коротких минусов (dislikes), каждый из 2–6 слов, конкретно: производительность, сложность, сюжет, монетизация и т. п., и вердикт одним абзацем (verdict, не больше 60 слов). Игнорируй спам и отзывы не по теме. Если серьёзных жалоб нет, верни пустой список минусов, а не пункты вроде «Нет негативных отзывов». Пиши на русском языке.`;
 
-const TRANSCRIBE_PROMPT = `Transcribe what the narrator (the YouTuber/let's-player) says in this video segment, verbatim, in the original language. Speech only: no descriptions of visuals, no timestamps, no speaker labels. If nobody speaks, answer with an empty string.`;
+const TRANSCRIBE_PROMPT = `Дословно расшифруй, что говорит ведущий (ютубер, летсплейщик) в этом фрагменте видео, на языке оригинала, без перевода. Только речь: без описания происходящего на экране, без таймкодов и подписей говорящих. Если никто не говорит, верни пустую строку.`;
 
-const LETSPLAY_PROMPT = `Below is a transcript of the most popular let's-play of the game "{{title}}" by the channel "{{channel}}" (video: "{{videoTitle}}").
+const LETSPLAY_PROMPT = `Ниже расшифровка самого популярного летсплея игры «{{title}}» с канала «{{channel}}» (видео: «{{videoTitle}}»).
 
-Transcript:
+Расшифровка:
 {{transcript}}
 
-Write a conclusion of what this blogger thinks about the game: overall impression, what excites them, what frustrates them. Return a conclusion (max 70 words, English, third person, e.g. "The blogger...") and 2-4 short highlight phrases.`;
+Напиши вывод о том, что этот блогер думает об игре: общее впечатление, что его восхищает и что раздражает. Верни вывод (conclusion, не больше 70 слов, на русском языке, в третьем лице, например «Блогер…») и 2–4 коротких ключевых фразы (highlights) на русском.`;
 
-const INSIGHTS_PROMPT = `You are a games market analyst helping game designers and user-acquisition specialists.
-Here are aggregated metrics from a library of recently released games on Metacritic:
+const INSIGHTS_PROMPT = `Ты аналитик игрового рынка и помогаешь гейм-дизайнерам и специалистам по закупке трафика.
+Вот агрегированные метрики библиотеки недавно вышедших игр с Metacritic:
 {{metrics}}
 
-Write exactly 3 key insights (max 30 words each) that are actionable for choosing a genre, platform or positioning for a new game. Each insight has kind "up" (growing demand), "down" (declining) or "opportunity" (under-served niche). Base every claim on the numbers given.`;
+Сформулируй ровно 3 ключевых инсайта (не больше 30 слов каждый) на русском языке, которые помогут выбрать жанр, платформу или позиционирование новой игры. У каждого инсайта есть тип kind: "up" (растущий спрос), "down" (спад) или "opportunity" (недооценённая ниша). Каждое утверждение опирай на приведённые цифры.`;
 
-export const DEFAULT_CUSTOM_PROMPT = `Based on the data about "{{title}}" ({{genres}}; platforms: {{platforms}}):
+export const DEFAULT_CUSTOM_PROMPT = `На основе данных об игре «{{title}}» ({{genres}}; платформы: {{platforms}}):
 {{description}}
 
-Critic verdict: {{criticVerdict}}
-Player verdict: {{userVerdict}}
+Вердикт критиков: {{criticVerdict}}
+Вердикт игроков: {{userVerdict}}
 
-Answer in at most 50 words: `;
+Ответь на русском языке, не больше 50 слов: `;
 
 type DefaultNode = Omit<PipelineNode, "params"> & { params: Record<string, unknown> };
 
@@ -65,24 +65,29 @@ function node(
 /** Default pipeline = the collection rules described in doc/TZ.md. */
 export function defaultPipeline(): DefaultNode[] {
   return [
-    node("sync", "sync", "Metacritic Sync", "Hourly schedule, 20 new games per run, daily restart.", null, 0),
+    node("sync", "sync", "Синхронизация с Metacritic", "Каждый час, 20 новых игр за запуск, новый отсчёт каждый день.", null, 0),
     node(
       "fetch",
       "fetch_games",
-      "Fetch New Games",
-      "New Releases first, then See All (newest) page by page, skipping games processed today.",
+      "Отбор новых игр",
+      "Сначала New Releases, затем See All (сначала новые) страница за страницей, без игр, уже обработанных сегодня.",
       "sync",
       1,
     ),
-    node("parse", "parse_game", "Parse Game Data", "Title, cover, platforms with Metascore/Userscore, developer, description, video.", "fetch", 2),
-    node("similar", "similar", "Find Similar Games", "Nearest games from the library by description, genres, developer and platforms.", "fetch", 3),
-    node("reviews", "critic_summary", "Summarize Critics", "What critics like and dislike.", "sync", 4, CRITIC_PROMPT),
-    node("users", "user_summary", "Summarize Players", "What players like and dislike.", "reviews", 5, USER_PROMPT),
-    node("youtube", "youtube_search", "YouTube Analysis", "Find the most viewed commentated let's-play.", "sync", 6),
-    node("transcribe", "transcribe", "Transcribe Narration", "Speech-to-text of the blogger's narration.", "youtube", 7, TRANSCRIBE_PROMPT),
-    node("letsplay", "letsplay_summary", "Let's-play Verdict", "Conclusion from the transcript with a link to the video.", "transcribe", 8, LETSPLAY_PROMPT),
-    node("insights", "insights", "Generate Insights", "Market key insights for the Analytics tab, once per run.", "reviews", 9, INSIGHTS_PROMPT),
+    node("parse", "parse_game", "Разбор карточки игры", "Название, обложка, платформы с Metascore и Userscore, разработчик, описание с переводом, видео.", "fetch", 2),
+    node("similar", "similar", "Похожие игры", "Ближайшие игры из библиотеки по описанию, жанрам, разработчику и платформам.", "fetch", 3),
+    node("reviews", "critic_summary", "Сводка критиков", "Что нравится и не нравится критикам.", "sync", 4, CRITIC_PROMPT),
+    node("users", "user_summary", "Сводка игроков", "Что нравится и не нравится игрокам.", "reviews", 5, USER_PROMPT),
+    node("youtube", "youtube_search", "Анализ YouTube", "Поиск самого просматриваемого летсплея с комментариями.", "sync", 6),
+    node("transcribe", "transcribe", "Расшифровка речи", "Перевод речи блогера в текст.", "youtube", 7, TRANSCRIBE_PROMPT),
+    node("letsplay", "letsplay_summary", "Вердикт летсплея", "Вывод по расшифровке со ссылкой на видео.", "transcribe", 8, LETSPLAY_PROMPT),
+    node("insights", "insights", "Инсайты рынка", "Ключевые инсайты для вкладки «Аналитика», раз за запуск.", "reviews", 9, INSIGHTS_PROMPT),
   ];
+}
+
+/** Description of a custom rule node. */
+export function customDescription(label: string): string {
+  return `Своё поле «${label}» для каждой обработанной игры.`;
 }
 
 /** Replaces {{name}} placeholders; unknown placeholders become empty. */

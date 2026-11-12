@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "@/lib/db/client";
-import { renderPrompt } from "./defaults";
+import { pipelineNodes } from "@/lib/db/schema";
+import { DEFAULT_CUSTOM_PROMPT, defaultPipeline, renderPrompt } from "./defaults";
+import { LEGACY_CUSTOM_PROMPT, LEGACY_NODES, LEGACY_PROMPTS } from "./legacy";
 import {
   addCustomNode,
   deleteCustomNode,
@@ -9,6 +11,7 @@ import {
   nodeOfType,
   resetPipeline,
   updateNode,
+  upgradeLegacyNodes,
 } from "./repo";
 
 let db: Db;
@@ -63,5 +66,49 @@ describe("pipeline rules", () => {
 
   it("renders prompt placeholders", () => {
     expect(renderPrompt("Hi {{title}} {{missing}}!", { title: "Elden Ring" })).toBe("Hi Elden Ring !");
+  });
+});
+
+describe("upgradeLegacyNodes", () => {
+  it("moves untouched English defaults to Russian and keeps user edits", () => {
+    const fresh = openDb(":memory:");
+    const now = Date.now();
+    fresh
+      .insert(pipelineNodes)
+      .values(
+        defaultPipeline().map((n) => ({
+          ...n,
+          name: LEGACY_NODES[n.id].name,
+          description: LEGACY_NODES[n.id].description,
+          prompt: n.id === "users" ? "My own players prompt" : (LEGACY_PROMPTS[n.id] ?? n.prompt),
+          updatedAt: now,
+        })),
+      )
+      .run();
+    fresh
+      .insert(pipelineNodes)
+      .values({
+        id: "custom_monetization",
+        type: "custom_prompt",
+        name: "Monetization",
+        description: 'Custom field "Monetization" generated for every processed game.',
+        enabled: true,
+        prompt: `${LEGACY_CUSTOM_PROMPT}Monetization?`,
+        params: { fieldKey: "monetization", label: "Monetization", requireReviews: false, preferredModel: "" },
+        parentId: "letsplay",
+        sort: 10,
+        isCustom: true,
+        updatedAt: now,
+      })
+      .run();
+
+    const nodes = listNodes(fresh);
+    const byId = (id: string) => nodes.find((n) => n.id === id)!;
+    expect(byId("reviews")).toMatchObject({ name: "Сводка критиков", description: "Что нравится и не нравится критикам." });
+    expect(byId("reviews").prompt).toContain("Пиши на русском языке");
+    expect(byId("users").prompt).toBe("My own players prompt");
+    expect(byId("custom_monetization").description).toBe("Своё поле «Monetization» для каждой обработанной игры.");
+    expect(byId("custom_monetization").prompt).toBe(`${DEFAULT_CUSTOM_PROMPT}Monetization?`);
+    expect(upgradeLegacyNodes(fresh)).toBe(0);
   });
 });

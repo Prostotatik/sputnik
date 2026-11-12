@@ -133,3 +133,46 @@ describe("executeRun", () => {
     expect(db.select().from(runNodes).all().find((n) => n.nodeId === "custom_monetization")?.status).toBe("success");
   });
 });
+
+describe("description translation", () => {
+  it("translates a new description once and again only after Metacritic changes it", async () => {
+    const db = openDb(":memory:");
+    listNodes(db);
+    const ai = fakeAi();
+    const candidates = [{ ...item("t1"), source: "browse" as const }];
+    await executeRun({ db, mc: fakeMc([]), ai, youtubeSearch }, "manual", null, { candidates });
+    expect(ai.calls.filter((c) => c === "translate")).toHaveLength(1);
+    expect(ai.prompts.some((p) => p.startsWith("Переведи на русский"))).toBe(true);
+    expect(db.select().from(games).get()!.descriptionRu).toBe("Premium, no microtransactions");
+
+    await executeRun({ db, mc: fakeMc([]), ai, youtubeSearch }, "manual", null, { candidates });
+    expect(ai.calls.filter((c) => c === "translate")).toHaveLength(1);
+
+    const changed = fakeMc([]);
+    const original = changed.product.bind(changed);
+    changed.product = async (slug: string) => ({ ...(await original(slug)), description: "A brand new description" });
+    await executeRun({ db, mc: changed, ai, youtubeSearch }, "manual", null, { candidates });
+    expect(ai.calls.filter((c) => c === "translate")).toHaveLength(2);
+  });
+
+  it("keeps the original when translation is off or fails", async () => {
+    const db = openDb(":memory:");
+    updateNode(db, "parse", { params: { translateDescription: false } });
+    const ai = fakeAi();
+    await executeRun({ db, mc: fakeMc([]), ai, youtubeSearch }, "manual", null, { candidates: [{ ...item("t2"), source: "browse" as const }] });
+    expect(ai.calls).not.toContain("translate");
+    expect(db.select().from(games).get()!.descriptionRu).toBeNull();
+
+    const db2 = openDb(":memory:");
+    listNodes(db2);
+    const failing = fakeAi();
+    const text = failing.text;
+    failing.text = (async (ctx: { purpose: string }, prompt: string) => {
+      if (ctx.purpose === "translate") throw new Error("quota");
+      return text(ctx as never, prompt);
+    }) as typeof failing.text;
+    await executeRun({ db: db2, mc: fakeMc([]), ai: failing, youtubeSearch }, "manual", null, { candidates: [{ ...item("t3"), source: "browse" as const }] });
+    expect(db2.select().from(runs).get()!.status).toBe("success");
+    expect(db2.select().from(games).get()!.descriptionRu).toBeNull();
+  });
+});
