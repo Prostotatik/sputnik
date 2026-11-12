@@ -80,7 +80,8 @@ describe("upgradeLegacyNodes", () => {
           ...n,
           name: LEGACY_NODES[n.id].name,
           description: LEGACY_NODES[n.id].description,
-          prompt: n.id === "users" ? "My own players prompt" : (LEGACY_PROMPTS[n.id] ?? n.prompt),
+          // The oldest English version: early installs still hold it.
+          prompt: n.id === "users" ? "My own players prompt" : (LEGACY_PROMPTS[n.id]?.at(-1) ?? n.prompt),
           updatedAt: now,
         })),
       )

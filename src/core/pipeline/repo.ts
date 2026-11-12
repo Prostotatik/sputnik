@@ -35,7 +35,7 @@ export function upgradeLegacyNodes(db: Db): number {
       if (def && legacy && !row.isCustom) {
         if (row.name === legacy.name) patch.name = def.name;
         if (row.description === legacy.description) patch.description = def.description;
-        if (LEGACY_PROMPTS[row.id] !== undefined && row.prompt === LEGACY_PROMPTS[row.id]) patch.prompt = def.prompt;
+        if (row.prompt !== null && LEGACY_PROMPTS[row.id]?.includes(row.prompt)) patch.prompt = def.prompt;
       }
       if (row.isCustom) {
         const m = LEGACY_CUSTOM_DESCRIPTION.exec(row.description);
