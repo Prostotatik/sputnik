@@ -53,7 +53,7 @@ function OpinionCard({ title, items, tone, summary, emptyText }: { title: string
           {shown.map((t) => (
             <li key={t} className="flex items-center gap-2.5 text-[13px] text-muted">
               <span aria-hidden className={clsx("h-1.5 w-1.5 shrink-0 rounded-full", tone === "like" ? "bg-good" : "bg-bad")} />
-              <span className={clsx(!open && "truncate")} title={t}>
+              <span className={clsx("first-letter:uppercase", !open && "truncate")} title={t}>
                 {t}
               </span>
             </li>

@@ -73,3 +73,6 @@ export const LEGACY_NODES: Record<string, { name: string; description: string }>
 
 /** Description given to custom rules before the Russian UI. */
 export const LEGACY_CUSTOM_DESCRIPTION = /^Custom field "(.*)" generated for every processed game\.$/;
+
+/** Russian names from the first Russian release, later shortened to fit the graph. */
+export const OLD_RU_NAMES: Record<string, string> = { sync: "Синхронизация с Metacritic", parse: "Разбор карточки игры" };

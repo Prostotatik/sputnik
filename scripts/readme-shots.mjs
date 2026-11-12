@@ -16,16 +16,30 @@ const shot = async (name, opts = {}) => {
   await page.screenshot({ path: `${out}/${name}.png`, ...opts });
   log(`${name}.png`);
 };
-// Screenshot of an element with some breathing room around it.
-const clip = async (name, locator, pad = 12) => {
-  const box = await locator.boundingBox();
-  if (!box) throw new Error(`${name}: element not visible`);
-  await shot(name, { clip: { x: Math.max(0, box.x - pad), y: Math.max(0, box.y - pad), width: box.width + pad * 2, height: box.height + pad * 2 } });
+// Screenshot of a whole element, scrolled into view.
+const clip = async (name, locator) => {
+  await locator.scrollIntoViewIfNeeded();
+  await locator.screenshot({ path: `${out}/${name}.png` });
+  log(`${name}.png`);
 };
+
+/** A well-reviewed game that has both summaries, a let's-play verdict and a Russian description, or GAME=<slug>. */
+async function showcaseGame() {
+  if (process.env.GAME) return process.env.GAME;
+  const list = await (await fetch(`${base}/api/games?sort=metascore&limit=60`)).json();
+  for (const g of list.items) {
+    const d = await (await fetch(`${base}/api/games/${encodeURIComponent(g.slug)}`)).json();
+    const ru = /[а-яё]/i.test(d.game.description ?? "");
+    if (d.critic && d.user && d.insight && ru && d.similar.length >= 4) return g.slug;
+  }
+  return list.items[0]?.slug;
+}
 
 try {
   // 1. Games: list + card.
-  await page.goto(`${base}/games`);
+  const game = await showcaseGame();
+  log(`showcase game: ${game}`);
+  await page.goto(`${base}/games?game=${encodeURIComponent(game)}`);
   await page.getByRole("heading", { name: "Новые игры" }).waitFor();
   await settle(2500);
   await shot("games");
@@ -59,10 +73,11 @@ try {
   await dialog.waitFor();
   await dialog.getByRole("button", { name: "Монетизация" }).click();
   await settle();
-  await clip("workers-add-rule", dialog, 0);
+  await clip("workers-add-rule", dialog);
   await page.keyboard.press("Escape");
 
   // 7. History: a past run on the same graph.
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole("tab", { name: "История" }).click();
   await settle(2500);
   await shot("workers-history", { clip: { x: 240, y: 0, width: 1200, height: 760 } });

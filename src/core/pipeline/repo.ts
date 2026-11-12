@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import type { Db } from "@/lib/db/client";
 import { pipelineNodes } from "@/lib/db/schema";
 import { DEFAULT_CUSTOM_PROMPT, customDescription, defaultPipeline } from "./defaults";
-import { LEGACY_CUSTOM_DESCRIPTION, LEGACY_CUSTOM_PROMPT, LEGACY_NODES, LEGACY_PROMPTS } from "./legacy";
+import { LEGACY_CUSTOM_DESCRIPTION, LEGACY_CUSTOM_PROMPT, LEGACY_NODES, LEGACY_PROMPTS, OLD_RU_NAMES } from "./legacy";
 import {
   isNodeType,
   validateParams,
@@ -33,7 +33,7 @@ export function upgradeLegacyNodes(db: Db): number {
       const def = defaults.get(row.id);
       const legacy = LEGACY_NODES[row.id];
       if (def && legacy && !row.isCustom) {
-        if (row.name === legacy.name) patch.name = def.name;
+        if (row.name === legacy.name || OLD_RU_NAMES[row.id] === row.name) patch.name = def.name;
         if (row.description === legacy.description) patch.description = def.description;
         if (row.prompt !== null && LEGACY_PROMPTS[row.id]?.includes(row.prompt)) patch.prompt = def.prompt;
       }

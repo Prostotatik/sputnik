@@ -43,13 +43,13 @@ export function every(minutes: number | null | undefined): string {
   return `каждые ${h} ч${m ? ` ${m} мин` : ""}`;
 }
 
-/** Release date as "10 нояб." (this year) or "10 нояб. 2024 г.". Dates are stored as YYYY-MM-DD. */
+/** Release date as "10.11" (this year) or "10.11.24". Dates are stored as YYYY-MM-DD. */
 export function shortDate(iso: string | null | undefined, now = Date.now()): string {
   if (!iso) return "скоро";
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return "скоро";
   const sameYear = d.getUTCFullYear() === new Date(now).getUTCFullYear();
-  return d.toLocaleDateString(LOCALE, { month: "short", day: "numeric", year: sameYear ? undefined : "numeric", timeZone: "UTC" });
+  return d.toLocaleDateString(LOCALE, { day: "2-digit", month: "2-digit", year: sameYear ? undefined : "2-digit", timeZone: "UTC" });
 }
 
 /** Full release date, "10 нояб. 2025 г.". */

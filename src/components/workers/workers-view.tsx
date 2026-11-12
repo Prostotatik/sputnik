@@ -133,7 +133,7 @@ export function WorkersView() {
                   : status.run
                     ? status.run.status === "running"
                       ? "идёт сейчас"
-                      : `${status.run.status === "failed" ? "упал за" : "занял"} ${duration((status.run.finishedAt ?? status.run.startedAt) - status.run.startedAt)}, следующий в ${clock(status.worker.nextRunAt)}`
+                      : `${status.run.status === "failed" ? "упал, " : ""}${duration((status.run.finishedAt ?? status.run.startedAt) - status.run.startedAt)}, далее в ${clock(status.worker.nextRunAt)}`
                     : "запусков ещё не было"
               }
             />
@@ -179,7 +179,7 @@ export function WorkersView() {
           )}
         </div>
 
-        <div className="mt-2 grid gap-4 lg:grid-cols-[1fr_160px]">
+        <div className="mt-2 grid gap-4 lg:grid-cols-[1fr_184px]">
           <div className="relative min-w-0">
             {nodes.length ? (
               <PipelineGraph nodes={nodes} exec={exec} selectedId={selectedId} onSelect={(id) => selectNode(id)} now={now} runLabel={run ? `#${run.id}` : null} />

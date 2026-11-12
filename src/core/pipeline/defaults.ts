@@ -65,7 +65,7 @@ function node(
 /** Default pipeline = the collection rules described in doc/TZ.md. */
 export function defaultPipeline(): DefaultNode[] {
   return [
-    node("sync", "sync", "Синхронизация с Metacritic", "Каждый час, 20 новых игр за запуск, новый отсчёт каждый день.", null, 0),
+    node("sync", "sync", "Синхронизация", "Каждый час, 20 новых игр за запуск, новый отсчёт каждый день.", null, 0),
     node(
       "fetch",
       "fetch_games",
@@ -74,7 +74,7 @@ export function defaultPipeline(): DefaultNode[] {
       "sync",
       1,
     ),
-    node("parse", "parse_game", "Разбор карточки игры", "Название, обложка, платформы с Metascore и Userscore, разработчик, описание с переводом, видео.", "fetch", 2),
+    node("parse", "parse_game", "Разбор карточки", "Название, обложка, платформы с Metascore и Userscore, разработчик, описание с переводом, видео.", "fetch", 2),
     node("similar", "similar", "Похожие игры", "Ближайшие игры из библиотеки по описанию, жанрам, разработчику и платформам.", "fetch", 3),
     node("reviews", "critic_summary", "Сводка критиков", "Что нравится и не нравится критикам.", "sync", 4, CRITIC_PROMPT),
     node("users", "user_summary", "Сводка игроков", "Что нравится и не нравится игрокам.", "reviews", 5, USER_PROMPT),
