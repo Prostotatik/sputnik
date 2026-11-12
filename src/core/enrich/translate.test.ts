@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isRussian, translateDescription, TRANSLATE_MODEL } from "./translate";
+import { isRussian, translateDescription } from "./translate";
 import type { AiService } from "../ai/service";
 
 describe("isRussian", () => {
@@ -11,10 +11,10 @@ describe("isRussian", () => {
 });
 
 describe("translateDescription", () => {
-  it("prefers the free Gemma model and strips quotes", async () => {
+  it("keeps the rule's model choice and strips quotes", async () => {
     let preferred: string | undefined;
     const ai = { text: async (ctx: { preferredModel?: string }) => ((preferred = ctx.preferredModel), { value: " «Перевод» ", model: "m" }) } as unknown as AiService;
-    expect(await translateDescription(ai, { purpose: "translate" }, "Text")).toEqual({ value: "Перевод", model: "m" });
-    expect(preferred).toBe(TRANSLATE_MODEL);
+    expect(await translateDescription(ai, { purpose: "translate", preferredModel: "" }, "Text")).toEqual({ value: "Перевод", model: "m" });
+    expect(preferred).toBe("");
   });
 });

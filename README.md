@@ -1,93 +1,151 @@
+<div align="center">
+
+<img src="src/app/icon.svg" width="72" alt="" />
+
 # Sputnik
 
-Sputnik tracks newly released games on Metacritic. Once an hour it takes 20 games it has not processed yet that day and adds or updates them in a local library. For each game it collects:
+**ИИ-радар игрового рынка.** Каждый час забирает новые игры с Metacritic, читает за вас рецензии критиков и отзывы игроков, смотрит самый популярный летсплей на YouTube и показывает, что рынок думает о каждой игре и где пустые ниши.
 
-- title, cover, platforms with Metascore and Userscore per platform, developer, genres, description and video link (the Metacritic trailer when one exists, otherwise the analysed let's-play)
-- separate AI summaries of what critics and players like and dislike
-- an AI conclusion from the narration of the most popular commentated let's-play on YouTube, with a link to the video
-- similar games from the library
+[**Открыть демо →**](https://sputnik.morozfedor.dev)
 
-The web UI has four tabs:
+</div>
 
-- **Games**: list, filters, search, sort, game card and a live service monitor.
-- **Workers**: an interactive pipeline graph. The rules shown here drive the worker, and you can edit or add them.
-- **Analytics**: market insights for game designers and user-acquisition specialists.
-- **Monitoring**: worker health, run history, AI quota usage and estimated token spend.
+![Вкладка «Воркеры»: весь конвейер сбора данных живым графом](doc/readme/workers.png)
 
-Requirements and decisions live in [`openspec/`](openspec/). The original brief is in [`doc/TZ.md`](doc/TZ.md).
+## Что вы получаете
 
-## Setup
+- **Карточку каждой новой игры**: оценки Metascore и Userscore по платформам, описание на русском, трейлер.
+- **Выжимку отзывов за 10 секунд.** ИИ раскладывает рецензии на «что нравится» и «что не нравится» отдельно для критиков и для игроков.
+- **Мнение блогера.** Воркер сам находит самый просматриваемый летсплей с комментариями, расшифровывает речь и пишет вывод со ссылкой на видео.
+- **Аналитику для гейм-дизайнера и закупщика трафика**: растущие жанры, предложение и спрос, недооценённые ниши, ключевые инсайты.
+- **Полный контроль над ИИ без кода.** Об этом вкладка «Воркеры» ниже.
+
+## Вкладка «Воркеры»: ИИ-конвейер, который видно и которым можно управлять
+
+Обычно сбор данных с ИИ — чёрный ящик: что-то крутится на сервере, а почему ответ получился именно таким, не понять. В Sputnik весь конвейер на виду. Каждый шаг — это блок на графе. Видно, что он делает прямо сейчас, что получил на вход, что выдал и по каким правилам работает. Правила меняются мышкой, и следующий запуск сразу идёт по ним.
+
+### 1. Смотрите на работу вживую
+
+Откройте **Воркеры**. На графе весь путь игры: синхронизация с Metacritic → отбор новых игр → разбор карточки → сводки критиков и игроков → поиск летсплея → расшифровка речи → вердикт блогера → похожие игры и инсайты рынка.
+
+Во время запуска каждый блок показывает статус («В очереди», «Работает», «Готово», «Ошибка»), таймер и прогресс по играм. Страницу обновлять не нужно. Сверху — сколько шагов работает сейчас, сколько игр обработано за день и когда следующий запуск.
+
+### 2. Нажмите на шаг — увидите всё о нём
+
+![Подробности шага: статус, время, агент и текущие правила](doc/readme/workers-step.png)
+
+Под графом откроются **Подробности шага**: сколько он работал в последнем запуске, когда начал, какой агент его выполняет и с какими правилами.
+
+### 3. Меняйте правила без кода
+
+![Редактор правил: параметры с подсказками, выбор модели и промпт с плейсхолдерами](doc/readme/workers-rules.png)
+
+1. Нажмите **Изменить правила** (или вкладку **Правила**).
+2. Поменяйте что нужно. У каждого параметра есть подсказка: сколько игр брать за запуск, как часто запускаться, сколько отзывов отдавать модели, какой длины фрагмент видео расшифровывать, какой дневной лимит видео.
+3. Выберите модель или оставьте автоматическую ротацию: если у модели кончился лимит, Sputnik сам переключится на следующую.
+4. Отредактируйте промпт. Данные об игре подставляются кликом по плейсхолдеру: `{{title}}`, `{{genres}}`, `{{reviews}}` и другие.
+5. Нажмите **Сохранить правила**. Следующий запуск пойдёт по новым правилам.
+
+Ненужный шаг можно выключить переключателем «Выполнять этот шаг». Неверное значение не сохранится: под формой появится понятная ошибка. **Вернуть стандартные** откатывает шаг к правилам из ТЗ, **Сбросить всё** — весь конвейер.
+
+### 4. Загляните внутрь: вход, выход, логи
+
+![Вкладка «Выход»: какие игры шаг отобрал в последнем запуске](doc/readme/workers-output.png)
+
+Вкладки **Вход** и **Выход** показывают, что шаг получил и что отдал в последнем запуске: отобранные игры, промпт, который ушёл в модель, и её ответ. **Логи** — построчный журнал шага. Если ответ ИИ кажется странным, причину видно сразу.
+
+### 5. Добавьте своё правило — получите новое поле в карточке каждой игры
+
+![Новое правило из примера «Монетизация»](doc/readme/workers-add-rule.png)
+
+1. Нажмите **Добавить правило**.
+2. Начните с примера («Монетизация», «Целевая аудитория», «Конкуренты», «Рекламный крючок») или напишите свой вопрос.
+3. Кликами вставьте данные об игре: описание, вердикты критиков и игроков, вывод по летсплею.
+4. Нажмите **Проверить** и посмотрите ответ на любой игре из библиотеки. Ничего не сохраняется.
+5. Нажмите **Создать правило**. Новый блок появится на графе, а ответ — в карточке каждой обработанной игры.
+
+### 6. Вернитесь к любому прошлому запуску
+
+![Режим «История»: граф со статусами прошлого запуска](doc/readme/workers-history.png)
+
+Переключитесь с **Вживую** на **История** и выберите запуск. Граф покажет, как тогда отработал каждый шаг, а справа будет лента событий запуска.
+
+## Остальные вкладки
+
+**Игры** — список новинок с поиском, фильтром по платформе и сортировкой, карточка игры, похожие игры, вывод по YouTube и монитор сервиса.
+
+![Вкладка «Игры»](doc/readme/games.png)
+
+**Аналитика** — доли жанров и тренды, предложение и спрос, недооценённые ниши, популярные сочетания жанра и платформы, топ игр по интересу игроков и ключевые инсайты от ИИ. Отчёт выгружается в CSV.
+
+![Вкладка «Аналитика»](doc/readme/analytics.png)
+
+**Мониторинг** — здоровье воркера, текущий запуск, расход токенов и оценка стоимости, лимиты каждой модели, ошибки и история запусков.
+
+![Вкладка «Мониторинг»](doc/readme/monitoring.png)
+
+## Запустить у себя
+
+Нужны Node.js 24 и pnpm.
 
 ```sh
 pnpm install
 ```
 
-Create `.env` in the project root:
+Создайте `.env` в корне проекта:
 
 ```dotenv
-GOOGLE-AI-KEY=...        # Google AI Studio key (required)
-OPENAI_API_KEY=...       # optional fallback for text and embeddings
-GEMINI_BASE_URL=...      # optional, e.g. https://gateway.ai.cloudflare.com/v1/<account>/<gateway>/google-ai-studio/v1beta
-CF_AIG_TOKEN=...         # optional, token for an authenticated Cloudflare AI Gateway
+GOOGLE-AI-KEY=...        # ключ Google AI Studio (обязательно)
+OPENAI_API_KEY=...       # необязательно: запасной вариант для текста и эмбеддингов
+GEMINI_BASE_URL=...      # необязательно, например https://gateway.ai.cloudflare.com/v1/<account>/<gateway>/google-ai-studio/v1beta
+CF_AIG_TOKEN=...         # необязательно: токен для Cloudflare AI Gateway с авторизацией
 ```
-
-If Google answers `User location is not supported for the API use`, the server's IP is in a region the Gemini API does not serve. Route the calls through [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/) by setting `GEMINI_BASE_URL` (and `CF_AIG_TOKEN` when the gateway requires authentication).
-
-The keys are only read on the server. They are sent in request headers and redacted from logs, so they never reach the browser.
-
-## Run
 
 ```sh
-pnpm dev            # web UI on http://localhost:3000 and the worker together
-pnpm dev:web        # web only
-pnpm worker         # worker only (hourly schedule, Run Now requests, heartbeat)
-pnpm worker:once    # one collection run, then exit
+pnpm dev            # интерфейс на http://localhost:3000 и воркер вместе
+pnpm dev:web        # только интерфейс
+pnpm worker         # только воркер (расписание, кнопка «Запустить», пульс)
+pnpm worker:once    # один запуск сбора и выход
 ```
 
-Data is stored in SQLite at `data/sputnik.db`. Override the location with `SPUTNIK_DATA_DIR`. Migrations in `drizzle/` are applied automatically when the app starts.
+Нажмите **Запустить** — через пару минут появятся первые 20 игр.
 
-## How collection works
+Данные лежат в SQLite в `data/sputnik.db`, путь меняется переменной `SPUTNIK_DATA_DIR`. Миграции из `drizzle/` применяются сами при старте.
 
-1. **Selection.** The first run of the day (in the `Europe/Moscow` timezone by default) takes the Metacritic *New Releases* block. Later runs walk *See All → Newest* page by page and skip games already processed that day. The next day starts over from New Releases.
-2. **Per game.** The worker reads Metacritic's product data and per-platform scores, then:
-   - summarises a balanced sample of positive and negative critic and player reviews (games with no reviews are skipped);
-   - finds the most viewed commentated let's-play and transcribes a 3-minute narration clip with Gemini, using the YouTube URL as input, then writes a conclusion;
-   - embeds the game for the similar-games search.
-3. **After the run.** The worker refreshes the similar-game lists and writes AI key insights for Analytics.
+Если Google отвечает `User location is not supported for the API use`, Gemini API не работает в регионе сервера. Пустите запросы через [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/): задайте `GEMINI_BASE_URL` (и `CF_AIG_TOKEN`, если шлюз с авторизацией). Ключи читаются только на сервере и вырезаются из логов, в браузер они не попадают.
 
-Every step, prompt and parameter is a node in the **Workers** tab, and edits apply from the next run. Click a step, then **Edit rules**. Each parameter has a short explanation, the model is picked from the catalog, and prompt placeholders are inserted by clicking them. For example, you can change games per run, the interval, the clip length, the daily video budget or a prompt, or disable a step. **Add rule** opens a dialog for a custom prompt node, with example rules and a **Test** button that runs the prompt once on a library game without saving the answer. The answer of a saved rule is shown on each game card. **Reset to defaults** restores the rules from the brief.
+## Как это устроено
 
-The schedule counts from the start of the previous run. A run that starts at 01:23 and takes 48 seconds is followed by the next one at 02:23.
+1. **Отбор.** Первый запуск дня (по `Europe/Moscow`) берёт блок *New Releases* на Metacritic. Следующие листают *See All → Newest* и пропускают игры, уже обработанные сегодня. На следующий день всё начинается заново.
+2. **Каждая игра.** Воркер читает данные Metacritic и оценки по платформам, переводит описание на русский, делает сводки по сбалансированной выборке положительных и отрицательных отзывов, находит летсплей, расшифровывает 3 минуты речи Gemini прямо по ссылке YouTube и пишет вывод. Затем строит эмбеддинг для поиска похожих игр.
+3. **После запуска.** Обновляются списки похожих игр и пишутся инсайты для аналитики.
 
-## AI model rotation
+Расписание отсчитывается от старта предыдущего запуска: запуск в 01:23, который длился 48 секунд, сменит следующий в 02:23.
 
-Requests are routed by capability (text, video, embedding) across Gemini models, ordered by their free-tier limits from [`doc/google-limits.md`](doc/google-limits.md):
+**Ротация моделей.** Запросы распределяются по моделям Gemini с учётом бесплатных лимитов из [`doc/google-limits.md`](doc/google-limits.md): сначала Flash Lite (500 запросов в день каждая), затем Gemma 4 для текста, затем Flash (20 в день). Счётчики хранятся в SQLite и переживают перезапуск. Модель, ответившая 429 или 503, ставится на паузу, и запрос уходит следующей. OpenAI подключается последним и только при наличии `OPENAI_API_KEY`.
 
-- **Text and video:** Flash Lite models first (500 requests per day each), then Gemma 4 for text, then the 20-requests-per-day Flash models.
-- **Embeddings:** Gemini Embedding 2, then Embedding 1.
+Требования и решения описаны в [`openspec/`](openspec/), исходное ТЗ — в [`doc/TZ.md`](doc/TZ.md).
 
-Per-minute and per-day counters are stored in SQLite, so they survive restarts. A model that returns 429 or 503 is cooled down and the request moves to the next model. OpenAI is used last, and only if `OPENAI_API_KEY` is set.
-
-## Checks
+## Проверки и скрипты
 
 ```sh
-pnpm check          # typecheck + eslint + vitest
-node scripts/ui-smoke.mjs http://localhost:3000 /tmp   # browser check against a running `pnpm dev`
+pnpm check                                              # типы, eslint и тесты vitest
+node scripts/ui-smoke.mjs http://localhost:3000 /tmp    # браузерная проверка: правит правило и нажимает «Запустить»
+node scripts/readme-shots.mjs <url> doc/readme          # скриншоты для этого README, только чтение
+pnpm tsx scripts/translate-db.ts --dry-run              # сколько данных в базе ещё на английском
 ```
 
-`node scripts/layout-vs-refs.mjs http://localhost:3000` measures every block of the Games, Workers and Analytics tabs at the reference canvas size (1222×1287) and reports its IoU and centre offset against the same block in `doc/*-ref.png`. Set `GAME=<slug>` to pick the game shown in the card. `python3 -I scripts/compare-refs.py <dir>` compares screenshots named `f-<tab>-1222.png` with `doc/*-ref.png`, using blurred-luminance SSIM and mean colour. Each tab should be most similar to its own reference.
+`scripts/ui-smoke.mjs` запускает настоящий сбор: он ходит на Metacritic и тратит лимит Gemini, а изменённое правило возвращает в конце. `scripts/translate-db.ts` без `--dry-run` переводит на русский то, что уже лежит в базе: описания, сводки, выводы по летсплеям, свои поля и правила. Он работает только на моделях Flash Lite, описания отправляет пачками (около 200 запросов на тысячу игр), и его можно прервать и запустить снова. Перед запуском сделайте бэкап базы.
 
-`scripts/ui-smoke.mjs` edits a rule, checks that an invalid value is rejected, then presses Run Now. That starts a real collection run, which sends requests to Metacritic and spends Gemini quota. The script restores the edited rule when it finishes.
+## Безопасность
 
-## Security notes
+Это инструмент для одного пользователя, входа по паролю нет. Запускайте его на доверенной машине или за своей авторизацией.
 
-This is a single-user local tool and has no login. Run it on a trusted machine or behind your own auth.
+`src/proxy.ts` пропускает API-запросы только с Host `localhost`, `127.0.0.1` или из списка `SPUTNIK_ALLOWED_HOSTS` (через запятую). Это защищает от DNS rebinding. Межсайтовые изменяющие запросы (запуск, правка правил) отклоняются. Ячейки CSV экранируются от формульных инъекций.
 
-Live status reaches the browser over Server-Sent Events (`/api/stream`). If a reverse proxy compresses that stream, it buffers the events. The UI then falls back to polling `/api/status`, but you should exclude the stream from compression. With Caddy:
+Живой статус приходит в браузер через Server-Sent Events (`/api/stream`). Если обратный прокси сжимает этот поток, он буферизует события: интерфейс переключится на опрос `/api/status`, но поток лучше исключить из сжатия. Для Caddy:
 
 ```caddyfile
 @notStream not path /api/stream
 encode @notStream zstd gzip
 ```
-
-`src/proxy.ts` only accepts API requests whose Host is `localhost`, `127.0.0.1` or listed in `SPUTNIK_ALLOWED_HOSTS` (comma-separated), which blocks DNS rebinding. It also rejects cross-site state-changing requests such as Run Now and rule edits. Exported CSV cells are escaped against spreadsheet formula injection.

@@ -1,8 +1,5 @@
 import type { AiContext, AiService } from "../ai/service";
 
-/** Free Gemma first: it has a large daily quota, so translation never eats the Gemini quota the summaries rely on. */
-export const TRANSLATE_MODEL = "gemma-4-31b-it";
-
 const CYRILLIC = /[а-яё]/i;
 
 /** True when the text is already (mostly) Russian, so translating it again would waste a call. */
@@ -23,13 +20,13 @@ export function translatePrompt(text: string): string {
 ${text}`;
 }
 
-/** Translates a Metacritic game description into Russian. */
+/** Translates a Metacritic game description into Russian; the model comes from the normal rotation unless the rule picks one. */
 export async function translateDescription(
   ai: AiService,
   ctx: AiContext,
   text: string,
 ): Promise<{ value: string; model: string }> {
-  const res = await ai.text({ ...ctx, preferredModel: ctx.preferredModel || TRANSLATE_MODEL }, translatePrompt(text.slice(0, 4000)));
+  const res = await ai.text(ctx, translatePrompt(text.slice(0, 4000)));
   const value = res.value.trim().replace(/^["«]|["»]$/g, "");
   if (!value) throw new Error("пустой перевод");
   return { value, model: res.model };

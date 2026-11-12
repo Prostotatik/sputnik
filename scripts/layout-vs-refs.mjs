@@ -10,12 +10,12 @@ const REF = {
     blocks: {
       sidebar: [[0, 0, 118, 1287], () => document.querySelector("aside")],
       search: [[145, 22, 473, 57], () => document.querySelector("header label")],
-      list: [[136, 92, 430, 825], () => document.querySelector('section[aria-label="Game list"]')],
+      list: [[136, 92, 430, 825], () => document.querySelector('section[aria-label="Список игр"]')],
       hero: [[447, 70, 1222, 540], () => document.querySelector("article > div")],
       opinions: [[474, 550, 1196, 812], () => document.querySelector("article > div.grid")],
       similar: [[135, 845, 812, 1057], () => document.querySelector('[aria-labelledby="similar-title"]')],
       youtube: [[828, 836, 1196, 1054], () => document.querySelector('[aria-labelledby="yt-title"]')],
-      monitor: [[88, 1084, 1204, 1230], () => document.querySelector('section[aria-label="Service monitor"]')],
+      monitor: [[88, 1084, 1204, 1230], () => document.querySelector('section[aria-label="Монитор сервиса"]')],
     },
   },
   workers: {
@@ -24,7 +24,7 @@ const REF = {
       title: [[148, 100, 430, 165], () => document.querySelector("h1").parentElement],
       kpis: [[508, 78, 1200, 178], () => document.querySelector("h1").parentElement.nextElementSibling],
       graph: [[150, 240, 1030, 730], () => document.querySelector(".react-flow")],
-      legend: [[1040, 245, 1200, 698], () => document.querySelector('aside[aria-label="Legend"]')],
+      legend: [[1040, 245, 1200, 698], () => document.querySelector('aside[aria-label="Легенда"]')],
       nodeDetails: [[143, 757, 688, 1213], () => document.querySelector('[aria-labelledby="node-title"]')],
       runHistory: [[708, 757, 1200, 1213], () => document.querySelector('[aria-labelledby="history-title"]')],
     },

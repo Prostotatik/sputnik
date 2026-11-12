@@ -27,7 +27,7 @@ export class AiService {
     this.router = router ?? new AiRouter(db, { openai: Boolean(openAiApiKey()) });
   }
 
-  async json<T>(ctx: AiContext, prompt: string, schema: JsonSchema, validator: z.ZodType<T>, system?: string): Promise<AiResult<T>> {
+  async json<T>(ctx: AiContext, prompt: string, schema: JsonSchema, validator: z.ZodType<T>, system?: string, opts: { maxOutputTokens?: number } = {}): Promise<AiResult<T>> {
     const res = await this.router.route({
       capability: "text",
       purpose: ctx.purpose,
@@ -36,7 +36,7 @@ export class AiService {
       runId: ctx.runId,
       gameId: ctx.gameId,
       call: async (spec) => {
-        const out = await generate(spec, { prompt, schema, system });
+        const out = await generate(spec, { prompt, schema, system, maxOutputTokens: opts.maxOutputTokens });
         let parsed: unknown;
         try {
           parsed = parseModelJson(out.value);

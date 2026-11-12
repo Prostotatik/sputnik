@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { TRANSLATE_MODEL } from "../enrich/translate";
 
 // Validation messages reach the Rules editor, so they are in Russian.
 z.config(z.locales.ru());
@@ -30,7 +29,7 @@ export const paramSchemas = {
   }),
   parse_game: z.object({
     translateDescription: z.boolean().default(true),
-    preferredModel: z.string().max(80).default(TRANSLATE_MODEL),
+    preferredModel,
     userScoresPerPlatform: z.boolean().default(true),
   }),
   critic_summary: z.object({
